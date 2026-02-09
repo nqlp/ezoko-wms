@@ -10,10 +10,10 @@ const DEFAULT_ERROR_HIDE_MS = 3000; // 3 seconds
 const DEFAULT_SUCCESS_HIDE_MS = 5000; // 5 seconds
 
 export function useMobileScanner() {
-    const [error, setError] = useState<string | null>(null);
+    const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [errorAutoHideDuration, setErrorAutoHideDuration] = useState<number | undefined>(DEFAULT_ERROR_HIDE_MS);
     const [successAutoHideDuration, setSuccessAutoHideDuration] = useState<number | undefined>(DEFAULT_SUCCESS_HIDE_MS);
-    const [inlineMessage, setInlineMessage] = useState<string | null>(null);
+    const [inlineErrorMessage, setInlineErrorMessage] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [variant, setVariant] = useState<ProductVariant | null>(null);
@@ -29,10 +29,10 @@ export function useMobileScanner() {
     };
 
     const resetScanFeedback = () => {
-        setError(null);
+        setErrorMessage(null);
         setErrorAutoHideDuration(DEFAULT_ERROR_HIDE_MS);
         setSuccessAutoHideDuration(DEFAULT_SUCCESS_HIDE_MS);
-        setInlineMessage(null);
+        setInlineErrorMessage(null);
         setSuccessMessage(null);
     };
 
@@ -49,7 +49,7 @@ export function useMobileScanner() {
 
     const handleBinScan = async (barcode: string) => {
         if (!variant || stockLocation.length === 0) {
-            setError(`Barcode ${barcode} is NOT a PRODUCT barcode.`);
+            setErrorMessage(`Barcode ${barcode} is NOT a PRODUCT barcode.`);
             return;
         }
 
@@ -58,7 +58,7 @@ export function useMobileScanner() {
         );
 
         if (!destinationBin) {
-            setError(`Bin location ${barcode} not found`);
+            setErrorMessage(`Only source bin could be scanned at this point. ${barcode} is not a source bin.`);
             return;
         }
 
@@ -73,12 +73,12 @@ export function useMobileScanner() {
         }
 
         if (destinationBin.id === sourceBin.id) {
-            setError(`Source bin ${barcode} cannot be the same as destination bin`);
+            setErrorMessage(`Source bin ${sourceBin.id} cannot be the same as destination bin`);
             return;
         }
 
         if (moveQty > sourceBin.qty) {
-            setError(
+            setErrorMessage(
                 `Qty to move ${moveQty} is greater than qty on source bin (${sourceBin.qty})`
             );
             return;
@@ -99,7 +99,7 @@ export function useMobileScanner() {
         setLoading(false);
 
         if (!moveResult.success) {
-            setError(moveResult.message || "Failed to move stock");
+            setErrorMessage(moveResult.message || "Failed to move stock");
             return;
         }
 
@@ -122,25 +122,26 @@ export function useMobileScanner() {
 
                 if (!response.data.binQty || response.data.binQty.length === 0) {
                     const productTitle = response.data.product?.title;
-                    setError(`No Bin location stock for ${productTitle}`);
+                    const variantTitle = response.data.title;
+                    setErrorMessage(`No Bin location stock for "${productTitle}" "${variantTitle}"`);
                 }
                 return;
             }
 
             if (response.errorCode === "MULTIPLE_VARIANTS") {
-                setInlineMessage(response.message);
+                setInlineErrorMessage(response.message);
                 return;
             }
 
             if (response.errorCode === "NOT_FOUND") {
-                setError(response.message);
+                setErrorMessage(response.message);
                 setErrorAutoHideDuration(undefined);
                 return;
             }
 
-            setError(response.message || "Error scanning barcode");
+            setErrorMessage(response.message || "Error scanning barcode");
         } catch {
-            setError("Error scanning barcode");
+            setErrorMessage("Error scanning barcode");
         } finally {
             setLoading(false);
         }
@@ -162,19 +163,19 @@ export function useMobileScanner() {
         }
     };
 
-    const closeError = () => setError(null);
+    const closeError = () => setErrorMessage(null);
     const closeSuccess = () => setSuccessMessage(null);
     const handleBinSelection = (bins: string[]) => setSelectedBins(bins);
 
     return {
         closeError,
         closeSuccess,
-        error,
+        errorMessage,
         errorAutoHideDuration,
         successAutoHideDuration,
         handleBinSelection,
         handleScan,
-        inlineMessage,
+        inlineErrorMessage,
         loading,
         moveQty,
         selectedBins,

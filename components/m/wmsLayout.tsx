@@ -15,15 +15,11 @@ import { useRouter } from "next/navigation";
 
 interface WmsLayoutProps {
     title: string;
-    icon?: React.ReactNode;
-    actions?: React.ReactNode;
     children: React.ReactNode;
 }
 
 export default function WmsLayout({
     title,
-    icon,
-    actions,
     children,
 }: WmsLayoutProps) {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -55,7 +51,7 @@ export default function WmsLayout({
 
     return (
         <div>
-            <AppBar title={title} icon={icon} actions={actions} onMenuClick={handleDrawerToggle} />
+            <AppBar title={title} onMenuClick={handleDrawerToggle} />
 
             <Drawer
                 variant="temporary"

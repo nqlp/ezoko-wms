@@ -6,17 +6,18 @@ import BinLocationTable from "./BinLocationTable";
 import VariantCard from "@/app/scan/_components/VariantCard";
 import Typography from "@mui/material/Typography";
 import { useMobileScanner } from "./useMobileScanner";
+import MoveQtyControl from "./MoveQtyControl";
 
 export default function MobileScanner() {
     const {
         closeError,
         closeSuccess,
-        error,
+        errorMessage,
         errorAutoHideDuration,
         successAutoHideDuration,
         handleBinSelection,
         handleScan,
-        inlineMessage,
+        inlineErrorMessage,
         loading,
         moveQty,
         selectedBins,
@@ -29,19 +30,19 @@ export default function MobileScanner() {
     return (
         <div>
             <ScanInput onSubmit={handleScan} />
-            {inlineMessage && (
+            {inlineErrorMessage && (
                 <Typography
                     color="error"
                     sx={{ textAlign: "left", mt: 1, mb: 1 }}
                 >
-                    {inlineMessage}
+                    {inlineErrorMessage}
                 </Typography>
             )}
 
             {/* Snackbar Error (bottom) */}
-            {error && (
+            {errorMessage && (
                 <SnackBar
-                    message={error}
+                    message={errorMessage}
                     onClose={closeError}
                     autoHideDuration={errorAutoHideDuration}
                     severity="error"
@@ -68,8 +69,12 @@ export default function MobileScanner() {
                     selectedBins={selectedBins}
                     onBinSelectionChange={handleBinSelection}
                     moveQty={moveQty}
-                    onMoveQtyChange={setMoveQty}
                 />
+            )}
+
+            {/* Show move qty control if a bin location is selected */}
+            {selectedBins.length > 0 && (
+                <MoveQtyControl moveQty={moveQty} onMoveQtyChange={setMoveQty} />
             )}
         </div>
     )

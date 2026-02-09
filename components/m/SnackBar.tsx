@@ -6,7 +6,7 @@ import Alert from "@mui/material/Alert";
 interface SnackbarProps {
     message: string,
     onClose: () => void;
-    autoHideDuration?: number; // en millisecondes
+    autoHideDuration?: number; // in milliseconds
     severity?: "error" | "warning" | "info" | "success";
 }
 
@@ -29,8 +29,8 @@ export default function SnackBar({ message, onClose, autoHideDuration, severity 
             severity={severity}
             variant="filled"
             sx={{
-                width: '100%',
-                marginTop: '16px',
+                width: "100%",
+                marginTop: "16px",
             }}
         >
             {message}

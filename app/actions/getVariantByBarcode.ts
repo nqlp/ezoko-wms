@@ -27,7 +27,7 @@ export async function getVariantByBarcode(
     if (productVariants.length === 0) {
       return {
         success: false,
-        message: `barcode ${trimmedBarcode} does not exist`,
+        message: `Barcode ${trimmedBarcode} does NOT exist`,
         errorCode: "NOT_FOUND",
       };
     }
