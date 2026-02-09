@@ -7,6 +7,7 @@ type VariantCardProps = {
 
 export default function VariantCard({ foundProduct }: VariantCardProps) {
     const [isMagnified, setIsMagnified] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
 
     if (!foundProduct) {
         return null;
@@ -18,17 +19,29 @@ export default function VariantCard({ foundProduct }: VariantCardProps) {
     const displayImageAlt = displayImage?.altText;
 
     useEffect(() => {
+        const media = window.matchMedia("(pointer: coarse)");
+        const updateIsMobile = () => setIsMobile(media.matches);
+        updateIsMobile();
+
+        media.addEventListener?.("change", updateIsMobile);
+
+        return () => {
+            media.removeEventListener?.("change", updateIsMobile);
+        };
+    }, []);
+
+    useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (e.key == "Escape") {
                 setIsMagnified(false);
             }
         };
 
-        if (isMagnified) {
+        if (isMagnified && !isMobile) {
             window.addEventListener("keydown", handleKeyDown);
         }
         return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isMagnified]);
+    }, [isMagnified, isMobile]);
 
     return (
         <div className="mt-4 border-(--ezoko-ink) bg-(--ezoko-mint)">
@@ -40,8 +53,8 @@ export default function VariantCard({ foundProduct }: VariantCardProps) {
 
             <div className="mt-4 flex gap-4 items-start">
                 <div
-                    className={`h-28 w-28 border-2 border-(--ezoko-ink) bg-white flex items-center justify-center ${displayImage ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
-                    onClick={() => displayImage && setIsMagnified(true)}
+                    className={`h-28 w-28 border-2 border-(--ezoko-ink) bg-white flex items-center justify-center ${displayImage && !isMobile ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                    onClick={() => displayImage && !isMobile && setIsMagnified(true)}
                 >
                     {displayImage ? (
                         <img
@@ -79,7 +92,7 @@ export default function VariantCard({ foundProduct }: VariantCardProps) {
                 </div>
             </div>
 
-            {isMagnified && displayImage && (
+            {isMagnified && displayImage && !isMobile && (
                 <div
                     className="fixed inset-0 z-50 flex justify-center p-4 bg-(--ezoko-paper)/50 backdrop-blur-sm"
                     onClick={() => setIsMagnified(false)}

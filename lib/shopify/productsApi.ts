@@ -18,12 +18,13 @@ export class ProductsApi {
   }
 
   async findVariantsByBarcode(barcode: string): Promise<ProductVariant[]> {
+    const trimmedBarcode = barcode.trim();
     const result = await this.client.query<{
       productVariants: {
         nodes: VariantWithStock[];
       };
     }>(FIND_VARIANTS_BY_BARCODE_QUERY, {
-      query: `barcode:${barcode}`,
+      query: `barcode:${trimmedBarcode}`,
     });
 
     const variants = result.productVariants.nodes;
@@ -41,9 +42,12 @@ export class ProductsApi {
       const getBinName = (fields: MetaobjectField[], fallbackHandle: string) => {
         const binField = fields.find((field) => field.key === "bin_location");
         const referenceFields = binField?.reference?.fields ?? [];
-        const referenceValue = referenceFields.find((f) => f.key === "bin")?.value;
-        if (referenceValue) {
-          return referenceValue;
+        const referenceValue =
+          referenceFields.find((field) => field.key === "bin_location")?.value ??
+          referenceFields.find((field) => field.key === "bin")?.value;
+
+        if (referenceValue?.trim()) {
+          return referenceValue.trim();
         }
 
         else if (binField?.reference?.handle) {

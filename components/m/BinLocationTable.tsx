@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Checkbox from "@mui/material/Checkbox";
 import Divider from "@mui/material/Divider";
 import Table from "@mui/material/Table";
@@ -38,12 +38,51 @@ export default function BinLocationTable({
         }
     }, [stockLocation, onBinSelectionChange]);
 
+    const [moveQtyInput, setMoveQtyInput] = useState<string>(String(moveQty));
+
+    useEffect(() => {
+        setMoveQtyInput(String(moveQty));
+    }, [moveQty]);
+
     const handleToggle = (id: string) => {
         const newChecked = selectedBins.includes(id)
             ? [] // Unselect if already selected
             : [id]; // Select the bin location we clicked
         onBinSelectionChange(newChecked);
-    }
+    };
+
+    const handleMoveQtyInputChange = (value: string) => {
+        setMoveQtyInput(value);
+
+        if (value === "") {
+            return;
+        }
+
+        if (!/^\d+$/.test(value)) {
+            return;
+        }
+
+        const parsed = Number.parseInt(value, 10);
+        if (parsed >= 1) {
+            onMoveQtyChange(parsed);
+        }
+    };
+
+    // When the input loses focus, ensure the value is valid and reset if not
+    const handleMoveQtyBlur = () => {
+        if (!/^\d+$/.test(moveQtyInput)) {
+            setMoveQtyInput(String(moveQty));
+            return;
+        }
+
+        const parsed = Number.parseInt(moveQtyInput, 10);
+        if (parsed < 1) {
+            setMoveQtyInput(String(moveQty));
+            return;
+        }
+
+        onMoveQtyChange(parsed);
+    };
 
     return (
         <div style={{ marginTop: "16px" }}>
@@ -102,11 +141,13 @@ export default function BinLocationTable({
                 <TextField
                     label="Move Qty"
                     type="number"
-                    value={moveQty}
-                    onChange={(e) => onMoveQtyChange(Number(e.target.value))}
+                    value={moveQtyInput}
+                    onChange={(e) => handleMoveQtyInputChange(e.target.value)}
+                    onBlur={handleMoveQtyBlur}
                     fullWidth
                     slotProps={{
                         htmlInput: {
+                            inputMode: "numeric",
                             min: 1,
                         }
                     }}

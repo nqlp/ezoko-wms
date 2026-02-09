@@ -26,13 +26,13 @@ export default function ScanInput({ onSubmit }: ScanInputProps) {
 
     return (
         <TextField
-            label="Barcode"
             variant="outlined"
             value={barcodeValue}
             onChange={(e) => setBarcodeValue(e.target.value)}
             onKeyDown={handleKeyDown}
             inputRef={inputRef}
             fullWidth
+            placeholder="SCAN"
             slotProps={{
                 input: {
                     startAdornment: (

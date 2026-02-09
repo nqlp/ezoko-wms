@@ -40,15 +40,8 @@ export default function AppBarProps({ title, icon, actions, onMenuClick }: AppBa
                 {/* Custom actions (if provided) */}
                 {actions}
 
-                {/* Logo Ezoko */}
-                <img
-                    src="/favicon.ico"
-                    alt="Ezoko Logo"
-                    width={32}
-                    height={32}
-                    className="wms-logo"
-                    style={{ marginLeft: actions ? '8px' : '0' }}
-                />
+                {/* Account */}
+                
             </Toolbar>
         </AppBar>
     );

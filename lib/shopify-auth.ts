@@ -14,8 +14,8 @@ import crypto from "crypto";
 
 // Initialize the Shopify API client
 export const shopify = shopifyApi({
-    apiKey: process.env.SHOPIFY_CLIENT_ID_BARCODE_SCANNER!,
-    apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET_BARCODE_SCANNER!,
+    apiKey: process.env.SHOPIFY_CLIENT_ID_BIN_LOCATION_EXTENSION!,
+    apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET_BIN_LOCATION_EXTENSION!,
     scopes: (process.env.SHOPIFY_OAUTH_SCOPES || "read_inventory,write_inventory").split(","),
     hostName: process.env.APP_URL ? new URL(process.env.APP_URL).hostname : "localhost",
     apiVersion: ApiVersion.January26,
@@ -40,17 +40,23 @@ export function generateState(): string {
 /**
  * Get the OAuth authorization URL using the Shopify library.
  */
-export function getAuthorizationUrl(shop: string, state: string): string {
+export function getAuthorizationUrl(
+    shop: string,
+    state: string,
+    options?: { online?: boolean }
+): string {
     const redirectUri = `${process.env.APP_URL}/api/auth/shopify/callback`;
     const scopes = process.env.SHOPIFY_OAUTH_SCOPES || "read_inventory,write_inventory";
+    const isOnline = options?.online !== false;
 
     // Build authorization URL for online (per-user) access tokens
-    return `https://${shop}/admin/oauth/authorize?` +
-        `client_id=${process.env.SHOPIFY_CLIENT_ID_BARCODE_SCANNER}` +
+    const baseUrl = `https://${shop}/admin/oauth/authorize?` +
+        `client_id=${process.env.SHOPIFY_CLIENT_ID_BIN_LOCATION_EXTENSION}` +
         `&scope=${scopes}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&state=${state}` +
-        `&grant_options[]=per-user`;
+        `&state=${state}`;
+
+    return isOnline ? `${baseUrl}&grant_options[]=per-user` : baseUrl;
 }
 
 /**
@@ -64,7 +70,7 @@ export async function exchangeCodeForToken(
     accessToken: string;
     scope: string;
     expiresIn: number;
-    associatedUser: {
+    associatedUser?: {
         id: number;
         firstName: string;
         lastName: string;
@@ -75,8 +81,8 @@ export async function exchangeCodeForToken(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            client_id: process.env.SHOPIFY_CLIENT_ID_BARCODE_SCANNER,
-            client_secret: process.env.SHOPIFY_CLIENT_SECRET_BARCODE_SCANNER,
+            client_id: process.env.SHOPIFY_CLIENT_ID_BIN_LOCATION_EXTENSION!,
+            client_secret: process.env.SHOPIFY_CLIENT_SECRET_BIN_LOCATION_EXTENSION!,
             code,
         }),
     });
@@ -93,11 +99,13 @@ export async function exchangeCodeForToken(
         accessToken: data.access_token,
         scope: data.scope,
         expiresIn: data.expires_in,
-        associatedUser: {
-            id: data.associated_user.id,
-            firstName: data.associated_user.first_name,
-            lastName: data.associated_user.last_name,
-            email: data.associated_user.email,
-        },
+        associatedUser: data.associated_user
+            ? {
+                  id: data.associated_user.id,
+                  firstName: data.associated_user.first_name,
+                  lastName: data.associated_user.last_name,
+                  email: data.associated_user.email,
+              }
+            : undefined,
     };
 }

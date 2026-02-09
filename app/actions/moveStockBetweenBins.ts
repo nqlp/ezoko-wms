@@ -1,8 +1,10 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { UpdateBinQtyByID } from "./updateBinQty";
 import { logMoveMovement } from "@/lib/stockMovement";
+import { prisma } from "@/lib/prisma";
 
 interface MoveStockInput {
     sourceBinId: string;
@@ -14,22 +16,44 @@ interface MoveStockInput {
     moveQty: number;
     barcode?: string;
     variantTitle?: string;
-    user?: string;
+}
+
+async function getCurrentUserName(): Promise<string | null> {
+    const cookieStore = await cookies();
+    const sessionToken = cookieStore.get("wms_session")?.value;
+
+    if (!sessionToken) {
+        return null;
+    }
+
+    const userSession = await prisma.userSession.findFirst({
+        where: {
+            sessionToken,
+            expiresAt: {
+                gte: new Date(),
+            },
+        },
+    });
+
+    return userSession?.shopifyUserName ?? null;
 }
 
 export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiResponse<void>> {
     const {
         sourceBinId,
-        sourceBinName,
         sourceBinQtyBefore,
         destinationBinId,
-        destinationBinName,
         destinationBinQtyBefore,
         moveQty,
-        barcode,
-        variantTitle,
-        user,
     } = input;
+    const user = await getCurrentUserName();
+
+    if (!user) {
+        return {
+            success: false,
+            message: "User not authenticated"
+        };
+    }
 
     // Calculate quantities after move
     const sourceQtyAfter = sourceBinQtyBefore - moveQty;
@@ -62,7 +86,7 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
         srcQty: input.sourceBinQtyBefore,
         destinationLocation: input.destinationBinName,
         destinationQty: input.destinationBinQtyBefore,
-        user: input.user ?? null,
+        user: user,
     });
 
     return { success: true, data: undefined };

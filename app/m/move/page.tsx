@@ -1,7 +1,8 @@
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import Image from "next/image";
 import WmsLayout from "@/components/m/wmsLayout";
+import MobileScanner from "@/components/m/MobileScanner";
+import { redirect } from "next/navigation";
 
 async function getSession() {
     const cookieStore = await cookies();
@@ -22,18 +23,17 @@ async function getSession() {
     return userSession;
 }
 
-export default async function MobilePage() {
+export default async function MovePage() {
     const session = await getSession();
 
+    if (!session) {
+        redirect("/api/auth/shopify");
+    }
+
     return (
-        <WmsLayout title="HOME">
-            <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh" }}>
-                <Image
-                    src="/favicon.ico"
-                    alt="Ezoko Logo"
-                    width={200}
-                    height={200}
-                />
+        <WmsLayout title="MOVE">
+            <div className="wms-container">
+                <MobileScanner />
             </div>
         </WmsLayout>
     );

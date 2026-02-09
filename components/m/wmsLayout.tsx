@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import AppBar from "./AppBar";
+import Toolbar from "@mui/material/Toolbar";
 import Drawer from "@mui/material/Drawer";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
@@ -48,11 +49,6 @@ export default function WmsLayout({
                         <ListItemText primary="MOVE" />
                     </ListItemButton>
                 </ListItem>
-                <ListItem disablePadding>
-                    <ListItemButton onClick={() => router.push("/m/scan")}>
-                        <ListItemText primary="SCAN" />
-                    </ListItemButton>
-                </ListItem>
             </List>
         </Box>
     );
@@ -72,7 +68,10 @@ export default function WmsLayout({
                 {drawerContent}
             </Drawer>
 
-            <main>{children}</main>
+            <main>
+                <Toolbar />
+                {children}
+            </main>
         </div>
     );
 }
