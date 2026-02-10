@@ -16,6 +16,7 @@ interface MoveStockInput {
     moveQty: number;
     barcode?: string;
     variantTitle?: string;
+    activity?: "MOVEMENT" | "PUTAWAY";
 }
 
 async function getCurrentUserName(): Promise<string | null> {
@@ -45,6 +46,7 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
         destinationBinId,
         destinationBinQtyBefore,
         moveQty,
+        activity = "MOVEMENT",
     } = input;
     const user = await getCurrentUserName();
 
@@ -71,23 +73,29 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
     // Update destination bin (increase)
     const destResult = await UpdateBinQtyByID(destinationBinId, destQtyAfter);
     if (!destResult.success) {
-        // TODO: Consider rollback mechanism
         return {
             success: false,
             message: `Failed to update destination bin: ${destResult.message}`
         };
     }
-
-    // Log to database only if both updates succeeded
-    await logMoveMovement({
-        barcode: input.barcode ?? null,
-        variantTitle: input.variantTitle ?? null,
-        srcLocation: input.sourceBinName,
-        srcQty: input.sourceBinQtyBefore,
-        destinationLocation: input.destinationBinName,
-        destinationQty: input.destinationBinQtyBefore,
-        user: user,
-    });
-
+    try {
+        // Log to database only if both updates succeeded
+        await logMoveMovement({
+            activity,
+            barcode: input.barcode ?? null,
+            variantTitle: input.variantTitle ?? null,
+            srcLocation: input.sourceBinName,
+            srcQty: input.sourceBinQtyBefore,
+            destinationLocation: input.destinationBinName,
+            destinationQty: input.destinationBinQtyBefore,
+            user: user,
+        });
+    }
+    catch (error) {
+        return {
+            success: false,
+            message: `Failed to log stock movement: ${error instanceof Error ? error.message : "Unknown error"}`
+        };
+    }
     return { success: true, data: undefined };
 }

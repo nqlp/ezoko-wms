@@ -15,12 +15,14 @@ interface BinLocationTableProps {
     selectedBins: string[];
     onBinSelectionChange: (bins: string[]) => void;
     moveQty: number;
+    selectionDisabled?: boolean;
 }
 
 export default function BinLocationTable({
     stockLocation,
     selectedBins,
     onBinSelectionChange,
+    selectionDisabled,
 }: BinLocationTableProps) {
 
     // Auto check if only one bin location
@@ -32,6 +34,9 @@ export default function BinLocationTable({
 
 
     const handleToggle = (id: string) => {
+        if (selectionDisabled) {
+            return;
+        }
         const newChecked = selectedBins.includes(id)
             ? [] // Unselect if already selected
             : [id]; // Select the bin location we clicked
@@ -65,6 +70,7 @@ export default function BinLocationTable({
                                             checked={isChecked}
                                             onChange={() => handleToggle(location.id)}
                                             sx={{ color: "var(--ezoko-pine)" }}
+                                            disabled={selectionDisabled}
                                         />
                                     </TableCell>
 

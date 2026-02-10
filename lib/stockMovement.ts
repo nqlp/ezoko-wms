@@ -23,6 +23,7 @@ type CorrectionLogInput = {
 };
 
 type MoveLogInput = {
+    activity?: Activity;
     barcode?: string | null;
     variantTitle?: string | null;
     srcLocation: string;
@@ -68,7 +69,7 @@ export async function logMoveMovement(input: MoveLogInput): Promise<void> {
     try {
         await prisma.stockMovementLog.create({
             data: {
-                activity: Activity.MOVEMENT,
+                activity: input.activity ?? Activity.MOVEMENT,
                 barcode: input.barcode ?? null,
                 variantTitle: input.variantTitle ?? null,
                 srcLocation: input.srcLocation,
@@ -81,5 +82,6 @@ export async function logMoveMovement(input: MoveLogInput): Promise<void> {
         });
     } catch (error) {
         console.error("Error logging move stock movement:", error);
+        throw error;
     }
 }

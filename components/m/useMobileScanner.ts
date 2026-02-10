@@ -8,8 +8,10 @@ import { StockLocation } from "@/lib/types/StockLocation";
 
 const DEFAULT_ERROR_HIDE_MS = 3000; // 3 seconds
 const DEFAULT_SUCCESS_HIDE_MS = 5000; // 5 seconds
+const RECEIVING_BIN_LOCATION = "receiving";
+type ScannerMode = "move" | "putaway";
 
-export function useMobileScanner() {
+export function useMobileScanner(mode: ScannerMode) {
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
     const [errorAutoHideDuration, setErrorAutoHideDuration] = useState<number | undefined>(DEFAULT_ERROR_HIDE_MS);
     const [successAutoHideDuration, setSuccessAutoHideDuration] = useState<number | undefined>(DEFAULT_SUCCESS_HIDE_MS);
@@ -20,6 +22,7 @@ export function useMobileScanner() {
     const [stockLocation, setStockLocation] = useState<StockLocation[]>([]);
     const [selectedBins, setSelectedBins] = useState<string[]>([]);
     const [moveQty, setMoveQty] = useState<number>(1);
+    const [currentProductBarcode, setCurrentProductBarcode] = useState<string | null>(null);
 
     const handleMoveQtyChange = (qty: number) => {
         if (!Number.isInteger(qty)) {
@@ -40,6 +43,7 @@ export function useMobileScanner() {
         setVariant(null);
         setStockLocation([]);
         setSelectedBins([]);
+        setCurrentProductBarcode(null);
     };
 
     const clearMoveWorkflow = () => {
@@ -62,14 +66,30 @@ export function useMobileScanner() {
             return;
         }
 
+        const receivingBin = stockLocation.find(
+            (location) => location.binLocation.trim().toLowerCase() === RECEIVING_BIN_LOCATION
+        ) ?? null;
+
         const sourceId = selectedBins[0];
-        const sourceBin = sourceId
-            ? stockLocation.find((location) => location.id === sourceId) ?? null
-            : null;
+        const sourceBin = mode === "putaway"
+            ? receivingBin
+            : (sourceId
+                ? stockLocation.find((location) => location.id === sourceId) ?? null
+                : null);
 
         if (!sourceBin) {
+            if (mode === "putaway") {
+                const productLabel = variant.product?.title || variant.title || barcode;
+                setErrorMessage(`No stock on RECEIVING for PRODUCT ${productLabel}`);
+                return;
+            }
+
             setSelectedBins([destinationBin.id]);
             return;
+        }
+
+        if (mode === "putaway" && selectedBins[0] !== sourceBin.id) {
+            setSelectedBins([sourceBin.id]);
         }
 
         if (destinationBin.id === sourceBin.id) {
@@ -95,6 +115,7 @@ export function useMobileScanner() {
             moveQty,
             barcode: variant.barcode,
             variantTitle: variant.title,
+            activity: mode === "putaway" ? "PUTAWAY" : "MOVEMENT",
         });
         setLoading(false);
 
@@ -110,15 +131,38 @@ export function useMobileScanner() {
     };
 
     const handleProductScan = async (barcode: string) => {
+        const trimmedBarcode = barcode.trim();
+
+        if (variant && currentProductBarcode === trimmedBarcode) {
+            setMoveQty(qty => qty + 1);
+            return;
+        }
         resetVariantSelection();
+        setMoveQty(1);
+        setCurrentProductBarcode(trimmedBarcode);
         setLoading(true);
 
         try {
             const response = await getVariantByBarcode(barcode);
 
             if (response.success) {
+                const binLocations = response.data.binQty || [];
                 setVariant(response.data);
-                setStockLocation(response.data.binQty ?? []);
+                setStockLocation(binLocations);
+                setCurrentProductBarcode(trimmedBarcode);
+
+                if (mode === "putaway") {
+                    const receivingBin = binLocations.find(
+                        (bin) => bin.binLocation.trim().toLowerCase() === RECEIVING_BIN_LOCATION
+                    );
+
+                    if (!receivingBin || receivingBin.qty <= 0) {
+                        const productLabel = response.data.product?.title || response.data.title || barcode;
+                        setErrorMessage(`No stock on RECEIVING for PRODUCT ${productLabel}`);
+                        return;
+                    }
+                    setSelectedBins([receivingBin.id]);
+                }
 
                 if (!response.data.binQty || response.data.binQty.length === 0) {
                     const productTitle = response.data.product?.title;
@@ -165,8 +209,13 @@ export function useMobileScanner() {
 
     const closeError = () => setErrorMessage(null);
     const closeSuccess = () => setSuccessMessage(null);
-    const handleBinSelection = (bins: string[]) => setSelectedBins(bins);
+    const handleBinSelection = (bins: string[]) => {
+        if (mode === "putaway") {
+            return;
+        }
 
+        setSelectedBins(bins);
+    };
     return {
         closeError,
         closeSuccess,

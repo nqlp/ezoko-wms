@@ -5,10 +5,17 @@ import SnackBar from "./SnackBar";
 import BinLocationTable from "./BinLocationTable";
 import VariantCard from "@/app/scan/_components/VariantCard";
 import Typography from "@mui/material/Typography";
+import Divider from "@mui/material/Divider";
 import { useMobileScanner } from "./useMobileScanner";
 import MoveQtyControl from "./MoveQtyControl";
 
-export default function MobileScanner() {
+type ScannerMode = "move" | "putaway";
+
+interface MobileScannerProps {
+    mode: ScannerMode;
+}
+
+export default function MobileScanner({ mode }: MobileScannerProps) {
     const {
         closeError,
         closeSuccess,
@@ -25,7 +32,7 @@ export default function MobileScanner() {
         stockLocation,
         successMessage,
         variant,
-    } = useMobileScanner();
+    } = useMobileScanner(mode);
 
     return (
         <div>
@@ -69,12 +76,16 @@ export default function MobileScanner() {
                     selectedBins={selectedBins}
                     onBinSelectionChange={handleBinSelection}
                     moveQty={moveQty}
+                    selectionDisabled={mode === "putaway"}
                 />
             )}
 
             {/* Show move qty control if a bin location is selected */}
             {selectedBins.length > 0 && (
-                <MoveQtyControl moveQty={moveQty} onMoveQtyChange={setMoveQty} />
+                <>
+                    <Divider sx={{ my: 2 }} />
+                    <MoveQtyControl moveQty={moveQty} onMoveQtyChange={setMoveQty} />
+                </>
             )}
         </div>
     )

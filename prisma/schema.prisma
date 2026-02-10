@@ -16,6 +16,9 @@ enum Activity {
   /// Movement when moving stock from one bin to another
   MOVEMENT @map("Movement")
 
+  /// Putaway when moving stock from RECEIVING to a storage bin
+  PUTAWAY @map("Putaway")
+
   /// Picking when picking a customer order or batch
   PICKING @map("Picking")
 
