@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import Checkbox from "@mui/material/Checkbox";
-import Divider from "@mui/material/Divider";
 import Table from "@mui/material/Table";
 import TableBody from "@mui/material/TableBody";
 import TableCell from "@mui/material/TableCell";
@@ -47,7 +46,7 @@ export default function BinLocationTable({
                         <TableRow>
                             <TableCell padding="checkbox"></TableCell>
                             <TableCell>Bin Location</TableCell>
-                            <TableCell align="right">Qty</TableCell>
+                            <TableCell align="center">Qty</TableCell>
                         </TableRow>
                     </TableHead>
                     <TableBody>
@@ -59,10 +58,6 @@ export default function BinLocationTable({
                                     onClick={() => handleToggle(location.id)}
                                     sx={{
                                         bgcolor: isChecked ? "var(--ezoko-mint)" : "var(--ezoko-paper)",
-                                        cursor: "pointer",
-                                        "&:hover": {
-                                            bgcolor: isChecked ? "var(--ezoko-mint)" : "var(--ezoko-paper)",
-                                        }
                                     }}
                                 >
                                     <TableCell padding="checkbox">
@@ -72,10 +67,12 @@ export default function BinLocationTable({
                                             sx={{ color: "var(--ezoko-pine)" }}
                                         />
                                     </TableCell>
+
                                     <TableCell sx={{ textTransform: "uppercase" }}>
                                         {location.binLocation}
                                     </TableCell>
-                                    <TableCell align="right" sx={{ fontWeight: "bold" }}>
+
+                                    <TableCell align="center" sx={{ fontWeight: "bold" }}>
                                         {location.qty}
                                     </TableCell>
                                 </TableRow>
@@ -84,7 +81,6 @@ export default function BinLocationTable({
                     </TableBody>
                 </Table>
             </TableContainer>
-            <Divider sx={{ my: 2 }} />
         </div>
     )
 }

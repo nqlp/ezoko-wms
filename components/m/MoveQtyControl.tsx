@@ -51,32 +51,34 @@ export default function MoveQtyControl({ moveQty, onMoveQtyChange }: MoveQtyCont
     };
 
     return (
-        <div style={{ display: "flex", alignItems: "center" }}>
-            <IconButton
-                onClick={() => onMoveQtyChange(moveQty - 1)}
-                disabled={moveQty <= 1}
-            >
-                <RemoveIcon />
-            </IconButton>
-            <TextField
-                label="Move Qty"
-                type="number"
-                value={moveQtyInput}
-                onChange={(e) => handleMoveQtyInputChange(e.target.value)}
-                onBlur={handleMoveQtyBlur}
-                fullWidth
-                slotProps={{
-                    htmlInput: {
-                        inputMode: "numeric",
-                        min: 1,
-                    }
-                }}
-            />
-            <IconButton
-                onClick={() => onMoveQtyChange(moveQty + 1)}
-            >
-                <AddIcon />
-            </IconButton>
-        </div>
+        <>
+            <div style={{ display: "flex", alignItems: "center" }}>
+                <IconButton
+                    onClick={() => onMoveQtyChange(moveQty - 1)}
+                    disabled={moveQty <= 1}
+                >
+                    <RemoveIcon />
+                </IconButton>
+                <TextField
+                    label="Move Qty"
+                    type="number"
+                    value={moveQtyInput}
+                    onChange={(e) => handleMoveQtyInputChange(e.target.value)}
+                    onBlur={handleMoveQtyBlur}
+                    fullWidth
+                    slotProps={{
+                        htmlInput: {
+                            inputMode: "numeric",
+                            min: 1,
+                        }
+                    }}
+                />
+                <IconButton
+                    onClick={() => onMoveQtyChange(moveQty + 1)}
+                >
+                    <AddIcon />
+                </IconButton>
+            </div>
+        </>
     );
 }

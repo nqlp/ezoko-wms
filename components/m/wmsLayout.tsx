@@ -16,11 +16,15 @@ import { useRouter } from "next/navigation";
 interface WmsLayoutProps {
     title: string;
     children: React.ReactNode;
+    shopifyUserName?: string | null;
+    shopifyUserEmail?: string | null;
 }
 
 export default function WmsLayout({
     title,
     children,
+    shopifyUserName,
+    shopifyUserEmail,
 }: WmsLayoutProps) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const router = useRouter();
@@ -45,20 +49,30 @@ export default function WmsLayout({
                         <ListItemText primary="MOVE" />
                     </ListItemButton>
                 </ListItem>
+
+                <ListItem disablePadding>
+                    <ListItemButton onClick={() => router.push("/m/putaway")}>
+                        <ListItemText primary="PUTAWAY" />
+                    </ListItemButton>
+                </ListItem>
             </List>
         </Box>
     );
 
     return (
         <div>
-            <AppBar title={title} onMenuClick={handleDrawerToggle} />
-
+            <AppBar
+                title={title}
+                onMenuClick={handleDrawerToggle}
+                shopifyUserName={shopifyUserName}
+                shopifyUserEmail={shopifyUserEmail}
+            />
             <Drawer
                 variant="temporary"
                 open={mobileOpen}
                 onClose={handleDrawerToggle}
                 ModalProps={{
-                    keepMounted: true, // Better open performance on mobile.
+                    keepMounted: true, // Better open performance on mobile
                 }}
             >
                 {drawerContent}

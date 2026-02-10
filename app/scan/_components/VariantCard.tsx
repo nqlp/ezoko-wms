@@ -45,12 +45,6 @@ export default function VariantCard({ foundProduct }: VariantCardProps) {
 
     return (
         <div className="mt-4 border-(--ezoko-ink) bg-(--ezoko-mint)">
-            <div>
-                <div>
-                    <h2 className="text-lg font-bold text-(--ezoko-ink)">Product found!</h2>
-                </div>
-            </div>
-
             <div className="mt-4 flex gap-4 items-start">
                 <div
                     className={`h-28 w-28 border-2 border-(--ezoko-ink) bg-white flex items-center justify-center ${displayImage && !isMobile ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}

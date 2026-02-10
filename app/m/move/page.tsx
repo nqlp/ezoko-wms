@@ -27,13 +27,17 @@ export default async function MovePage() {
     const session = await getSession();
 
     if (!session) {
-        redirect("/api/auth/shopify");
+        redirect("/m/login");
     }
 
     return (
-        <WmsLayout title="MOVE">
+        <WmsLayout
+            title="MOVE"
+            shopifyUserName={session.shopifyUserName}
+            shopifyUserEmail={session.shopifyUserEmail}
+        >
             <div className="wms-container">
-                <MobileScanner />
+                <MobileScanner mode="move" />
             </div>
         </WmsLayout>
     );
