@@ -19,6 +19,7 @@ enum Activity {
   PICKING = "PICKING",
   GOODS_ISSUE = "GOODS_ISSUE",
   INV_COUNTING = "INV_COUNTING",
+  PUTAWAY = "PUTAWAY",
 }
 
 interface CorrectionStockMovementPayload {
