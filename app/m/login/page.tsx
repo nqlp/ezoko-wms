@@ -1,28 +1,7 @@
-import { cookies } from "next/headers";
-import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 import Button from "@mui/material/Button";
 import Box from "@mui/material/Box";
-
-async function getSession() {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("wms_session")?.value;
-
-    if (!sessionToken) {
-        return null;
-    }
-
-    const userSession = await prisma.userSession.findFirst({
-        where: {
-            sessionToken,
-            expiresAt: {
-                gte: new Date(),
-            },
-        },
-    });
-
-    return userSession;
-}
+import { getSession } from "@/lib/auth/session";
 
 export default async function MobileLoginPage() {
     const session = await getSession();

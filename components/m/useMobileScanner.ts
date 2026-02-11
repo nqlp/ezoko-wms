@@ -1,193 +1,194 @@
 "use client";
 
-import { useState } from "react";
-import { getVariantByBarcode } from "@/app/actions/getVariantByBarcode";
-import { moveStockBetweenBins } from "@/app/actions/moveStockBetweenBins";
-import { ProductVariant } from "@/lib/types/ProductVariant";
-import { StockLocation } from "@/lib/types/StockLocation";
+import { useReducer } from "react";
+import { executeStockMove, fetchVariantByBarcode } from "./scanner/scannerApi";
+import { initialScannerState, scannerReducer } from "./scanner/scannerState";
+import type { MovementActivity, ScannerMode } from "./scanner/scannerTypes";
+import {
+    findBinByBarcode,
+    findReceivingBin,
+    getProductLabel,
+    isBinBarcode,
+    isProductBarcode,
+    trimmedBarcode,
+} from "./scannerRules";
 
-const DEFAULT_ERROR_HIDE_MS = 3000; // 3 seconds
-const DEFAULT_SUCCESS_HIDE_MS = 5000; // 5 seconds
-const RECEIVING_BIN_LOCATION = "receiving";
-type ScannerMode = "move" | "putaway";
+function resolveMovementActivity(mode: ScannerMode): MovementActivity {
+    return mode === "putaway" ? "PUTAWAY" : "MOVEMENT";
+}
 
 export function useMobileScanner(mode: ScannerMode) {
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-    const [errorAutoHideDuration, setErrorAutoHideDuration] = useState<number | undefined>(DEFAULT_ERROR_HIDE_MS);
-    const [successAutoHideDuration, setSuccessAutoHideDuration] = useState<number | undefined>(DEFAULT_SUCCESS_HIDE_MS);
-    const [inlineErrorMessage, setInlineErrorMessage] = useState<string | null>(null);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
-    const [variant, setVariant] = useState<ProductVariant | null>(null);
-    const [stockLocation, setStockLocation] = useState<StockLocation[]>([]);
-    const [selectedBins, setSelectedBins] = useState<string[]>([]);
-    const [moveQty, setMoveQty] = useState<number>(1);
-    const [currentProductBarcode, setCurrentProductBarcode] = useState<string | null>(null);
+    const [state, dispatch] = useReducer(scannerReducer, initialScannerState);
 
     const handleMoveQtyChange = (qty: number) => {
         if (!Number.isInteger(qty)) {
             return;
         }
-        setMoveQty(Math.max(1, qty));
+        dispatch({ type: "SET_MOVE_QTY", payload: Math.max(1, qty) });
     };
 
     const resetScanFeedback = () => {
-        setErrorMessage(null);
-        setErrorAutoHideDuration(DEFAULT_ERROR_HIDE_MS);
-        setSuccessAutoHideDuration(DEFAULT_SUCCESS_HIDE_MS);
-        setInlineErrorMessage(null);
-        setSuccessMessage(null);
+        dispatch({ type: "RESET_SCAN_FEEDBACK" });
     };
 
     const resetVariantSelection = () => {
-        setVariant(null);
-        setStockLocation([]);
-        setSelectedBins([]);
-        setCurrentProductBarcode(null);
+        dispatch({ type: "RESET_VARIANT_SELECTION" });
     };
 
     const clearMoveWorkflow = () => {
-        resetVariantSelection();
-        setMoveQty(1);
+        dispatch({ type: "CLEAR_MOVE_WORKFLOW" });
     };
 
     const handleBinScan = async (barcode: string) => {
-        if (!variant || stockLocation.length === 0) {
-            setErrorMessage(`Barcode ${barcode} is NOT a PRODUCT barcode.`);
+        if (!state.variant || state.stockLocation.length === 0) {
+            dispatch({ type: "SET_ERROR_MESSAGE", payload: `Barcode ${barcode} is NOT a PRODUCT barcode.` });
             return;
         }
 
-        const destinationBin = stockLocation.find(
-            (location) => location.binLocation.toLowerCase() === barcode.toLowerCase()
-        );
+        const destinationBin = findBinByBarcode(state.stockLocation, barcode);
 
         if (!destinationBin) {
-            setErrorMessage(`Only source bin could be scanned at this point. ${barcode} is not a source bin.`);
+            dispatch({
+                type: "SET_ERROR_MESSAGE",
+                payload: `Only source bin could be scanned at this point. ${barcode} is not a source bin.`,
+            });
             return;
         }
 
-        const receivingBin = stockLocation.find(
-            (location) => location.binLocation.trim().toLowerCase() === RECEIVING_BIN_LOCATION
-        ) ?? null;
+        const receivingBin = findReceivingBin(state.stockLocation);
 
-        const sourceId = selectedBins[0];
+        const sourceId = state.selectedBins[0];
         const sourceBin = mode === "putaway"
             ? receivingBin
             : (sourceId
-                ? stockLocation.find((location) => location.id === sourceId) ?? null
+                ? state.stockLocation.find((location) => location.id === sourceId) ?? null
                 : null);
 
         if (!sourceBin) {
             if (mode === "putaway") {
-                const productLabel = variant.product?.title || variant.title || barcode;
-                setErrorMessage(`No stock on RECEIVING for PRODUCT ${productLabel}`);
+                const productLabel = getProductLabel(
+                    state.variant.product?.title,
+                    state.variant.title,
+                    barcode
+                );
+                dispatch({ type: "SET_ERROR_MESSAGE", payload: `No stock on RECEIVING for PRODUCT ${productLabel}` });
                 return;
             }
 
-            setSelectedBins([destinationBin.id]);
+            dispatch({ type: "SET_SELECTED_BINS", payload: [destinationBin.id] });
             return;
         }
 
-        if (mode === "putaway" && selectedBins[0] !== sourceBin.id) {
-            setSelectedBins([sourceBin.id]);
+        if (mode === "putaway" && state.selectedBins[0] !== sourceBin.id) {
+            dispatch({ type: "SET_SELECTED_BINS", payload: [sourceBin.id] });
         }
 
         if (destinationBin.id === sourceBin.id) {
-            setErrorMessage(`Source bin ${sourceBin.id} cannot be the same as destination bin`);
+            dispatch({
+                type: "SET_ERROR_MESSAGE",
+                payload: `Source bin ${sourceBin.id} cannot be the same as destination bin`,
+            });
             return;
         }
 
-        if (moveQty > sourceBin.qty) {
-            setErrorMessage(
-                `Qty to move ${moveQty} is greater than qty on source bin (${sourceBin.qty})`
-            );
+        if (state.moveQty > sourceBin.qty) {
+            dispatch({
+                type: "SET_ERROR_MESSAGE",
+                payload: `Qty to move ${state.moveQty} is greater than qty on source bin (${sourceBin.qty})`,
+            });
             return;
         }
 
-        setLoading(true);
-        const moveResult = await moveStockBetweenBins({
+        dispatch({ type: "SET_LOADING", payload: true });
+        const moveResult = await executeStockMove({
             sourceBinId: sourceBin.id,
             sourceBinName: sourceBin.binLocation,
             sourceBinQtyBefore: sourceBin.qty,
             destinationBinId: destinationBin.id,
             destinationBinName: destinationBin.binLocation,
             destinationBinQtyBefore: destinationBin.qty,
-            moveQty,
-            barcode: variant.barcode,
-            variantTitle: variant.title,
-            activity: mode === "putaway" ? "PUTAWAY" : "MOVEMENT",
+            moveQty: state.moveQty,
+            barcode: state.variant.barcode,
+            variantTitle: state.variant.title,
+            activity: resolveMovementActivity(mode),
         });
-        setLoading(false);
+        dispatch({ type: "SET_LOADING", payload: false });
 
         if (!moveResult.success) {
-            setErrorMessage(moveResult.message || "Failed to move stock");
+            dispatch({ type: "SET_ERROR_MESSAGE", payload: moveResult.message || "Failed to move stock" });
             return;
         }
 
-        setSuccessMessage(
-            `Qty of ${moveQty} successfully moved from ${sourceBin.binLocation} to ${destinationBin.binLocation}`
-        );
+        dispatch({
+            type: "SET_SUCCESS_MESSAGE",
+            payload: `Qty of ${state.moveQty} successfully moved from ${sourceBin.binLocation} to ${destinationBin.binLocation}`,
+        });
         clearMoveWorkflow();
     };
 
     const handleProductScan = async (barcode: string) => {
-        const trimmedBarcode = barcode.trim();
+        const trimmedBc = trimmedBarcode(barcode);
 
-        if (variant && currentProductBarcode === trimmedBarcode) {
-            setMoveQty(qty => qty + 1);
+        if (state.variant && state.currentProductBarcode === trimmedBc) {
+            dispatch({ type: "INCREMENT_MOVE_QTY" });
             return;
         }
         resetVariantSelection();
-        setMoveQty(1);
-        setCurrentProductBarcode(trimmedBarcode);
-        setLoading(true);
+        dispatch({ type: "SET_MOVE_QTY", payload: 1 });
+        dispatch({ type: "SET_CURRENT_PRODUCT_BARCODE", payload: trimmedBc });
+        dispatch({ type: "SET_LOADING", payload: true });
 
         try {
-            const response = await getVariantByBarcode(barcode);
+            const response = await fetchVariantByBarcode(trimmedBc);
 
             if (response.success) {
                 const binLocations = response.data.binQty || [];
-                setVariant(response.data);
-                setStockLocation(binLocations);
-                setCurrentProductBarcode(trimmedBarcode);
+                dispatch({ type: "SET_VARIANT", payload: response.data });
+                dispatch({ type: "SET_STOCK_LOCATION", payload: binLocations });
+                dispatch({ type: "SET_CURRENT_PRODUCT_BARCODE", payload: trimmedBc });
 
                 if (mode === "putaway") {
-                    const receivingBin = binLocations.find(
-                        (bin) => bin.binLocation.trim().toLowerCase() === RECEIVING_BIN_LOCATION
-                    );
+                    const receivingBin = findReceivingBin(binLocations);
 
                     if (!receivingBin || receivingBin.qty <= 0) {
-                        const productLabel = response.data.product?.title || response.data.title || barcode;
-                        setErrorMessage(`No stock on RECEIVING for PRODUCT ${productLabel}`);
+                        const productLabel = getProductLabel(
+                            response.data.product?.title,
+                            response.data.title,
+                            trimmedBc
+                        );
+                        dispatch({ type: "SET_ERROR_MESSAGE", payload: `No stock on RECEIVING for PRODUCT ${productLabel}` });
                         return;
                     }
-                    setSelectedBins([receivingBin.id]);
+                    dispatch({ type: "SET_SELECTED_BINS", payload: [receivingBin.id] });
                 }
 
                 if (!response.data.binQty || response.data.binQty.length === 0) {
                     const productTitle = response.data.product?.title;
                     const variantTitle = response.data.title;
-                    setErrorMessage(`No Bin location stock for "${productTitle}" "${variantTitle}"`);
+                    dispatch({
+                        type: "SET_ERROR_MESSAGE",
+                        payload: `No Bin location stock for "${productTitle}" "${variantTitle}"`,
+                    });
                 }
                 return;
             }
 
             if (response.errorCode === "MULTIPLE_VARIANTS") {
-                setInlineErrorMessage(response.message);
+                dispatch({ type: "SET_INLINE_ERROR_MESSAGE", payload: response.message });
                 return;
             }
 
             if (response.errorCode === "NOT_FOUND") {
-                setErrorMessage(response.message);
-                setErrorAutoHideDuration(undefined);
+                dispatch({ type: "SET_ERROR_MESSAGE", payload: response.message });
+                dispatch({ type: "SET_ERROR_AUTO_HIDE_DURATION", payload: undefined });
                 return;
             }
 
-            setErrorMessage(response.message || "Error scanning barcode");
+            dispatch({ type: "SET_ERROR_MESSAGE", payload: response.message || "Error scanning barcode" });
         } catch {
-            setErrorMessage("Error scanning barcode");
+            dispatch({ type: "SET_ERROR_MESSAGE", payload: "Error scanning barcode" });
         } finally {
-            setLoading(false);
+            dispatch({ type: "SET_LOADING", payload: false });
         }
     };
 
@@ -197,40 +198,40 @@ export function useMobileScanner(mode: ScannerMode) {
         resetScanFeedback();
 
         // If the barcode starts with a letter, it is a bin location barcode
-        if (/^[a-zA-Z]/.test(barcode)) {
+        if (isBinBarcode(barcode)) {
             await handleBinScan(barcode);
             return;
         }
         // If the barcode starts with a number, it is a product barcode
-        if (/^[0-9]/.test(barcode)) {
+        if (isProductBarcode(barcode)) {
             await handleProductScan(barcode);
         }
     };
 
-    const closeError = () => setErrorMessage(null);
-    const closeSuccess = () => setSuccessMessage(null);
+    const closeError = () => dispatch({ type: "SET_ERROR_MESSAGE", payload: null });
+    const closeSuccess = () => dispatch({ type: "SET_SUCCESS_MESSAGE", payload: null });
     const handleBinSelection = (bins: string[]) => {
         if (mode === "putaway") {
             return;
         }
 
-        setSelectedBins(bins);
+        dispatch({ type: "SET_SELECTED_BINS", payload: bins });
     };
     return {
         closeError,
         closeSuccess,
-        errorMessage,
-        errorAutoHideDuration,
-        successAutoHideDuration,
+        errorMessage: state.errorMessage,
+        errorAutoHideDuration: state.errorAutoHideDuration,
+        successAutoHideDuration: state.successAutoHideDuration,
         handleBinSelection,
         handleScan,
-        inlineErrorMessage,
-        loading,
-        moveQty,
-        selectedBins,
+        inlineErrorMessage: state.inlineErrorMessage,
+        loading: state.loading,
+        moveQty: state.moveQty,
+        selectedBins: state.selectedBins,
         setMoveQty: handleMoveQtyChange,
-        stockLocation,
-        successMessage,
-        variant,
+        stockLocation: state.stockLocation,
+        successMessage: state.successMessage,
+        variant: state.variant,
     };
 }

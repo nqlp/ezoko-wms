@@ -8,8 +8,7 @@ import Typography from "@mui/material/Typography";
 import Divider from "@mui/material/Divider";
 import { useMobileScanner } from "./useMobileScanner";
 import MoveQtyControl from "./MoveQtyControl";
-
-type ScannerMode = "move" | "putaway";
+import type { ScannerMode } from "./scanner/scannerTypes";
 
 interface MobileScannerProps {
     mode: ScannerMode;
@@ -89,4 +88,4 @@ export default function MobileScanner({ mode }: MobileScannerProps) {
             )}
         </div>
     )
-}
+};

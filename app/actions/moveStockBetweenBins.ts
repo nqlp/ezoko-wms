@@ -1,10 +1,9 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { UpdateBinQtyByID } from "./updateBinQty";
 import { logMoveMovement } from "@/lib/stockMovement";
-import { prisma } from "@/lib/prisma";
+import { getCurrentUserName } from "@/lib/auth/session";
 
 interface MoveStockInput {
     sourceBinId: string;
@@ -17,26 +16,6 @@ interface MoveStockInput {
     barcode?: string;
     variantTitle?: string;
     activity?: "MOVEMENT" | "PUTAWAY";
-}
-
-async function getCurrentUserName(): Promise<string | null> {
-    const cookieStore = await cookies();
-    const sessionToken = cookieStore.get("wms_session")?.value;
-
-    if (!sessionToken) {
-        return null;
-    }
-
-    const userSession = await prisma.userSession.findFirst({
-        where: {
-            sessionToken,
-            expiresAt: {
-                gte: new Date(),
-            },
-        },
-    });
-
-    return userSession?.shopifyUserName ?? null;
 }
 
 export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiResponse<void>> {
