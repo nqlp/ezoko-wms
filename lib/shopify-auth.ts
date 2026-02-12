@@ -43,26 +43,20 @@ export function generateState(): string {
 export function getAuthorizationUrl(
     shop: string,
     state: string,
-    options?: { online?: boolean; prompt?: "login" | "select_account" | "consent" }
+    options?: { online?: boolean }
 ): string {
     const redirectUri = `${process.env.APP_URL}/api/auth/shopify/callback`;
     const scopes = process.env.SHOPIFY_OAUTH_SCOPES || "read_inventory,write_inventory";
     const isOnline = options?.online !== false;
 
     // Build authorization URL for online (per-user) access tokens
-    let baseUrl = `https://${shop}/admin/oauth/authorize?` +
+    const baseUrl = `https://${shop}/admin/oauth/authorize?` +
         `client_id=${process.env.SHOPIFY_CLIENT_ID_BIN_LOCATION_EXTENSION}` +
         `&scope=${scopes}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&state=${state}`;
 
-    if (options?.prompt) {
-        baseUrl += `&prompt=${options.prompt}`;
-    }
-
-    const finalUrl = isOnline ? `${baseUrl}&grant_options[]=per-user` : baseUrl;
-    console.log("[getAuthorizationUrl] Final URL:", finalUrl);
-    return finalUrl;
+    return isOnline ? `${baseUrl}&grant_options[]=per-user` : baseUrl;
 }
 
 /**

@@ -15,7 +15,6 @@ export async function GET() {
     // Generate a state parameter for CSRF protection
     const state = generateState();
 
-    // cookie state is to check if the request is from the same user
     const cookieStore = await cookies();
     cookieStore.set("shopify_auth_state", state, {
         httpOnly: true,
@@ -24,7 +23,7 @@ export async function GET() {
         maxAge: 60 * 10, // 10 minutes
         path: "/",
     });
-   
+
     // Online: user_sessions 
     cookieStore.set("shopify_auth_type", "online", {
         httpOnly: true,

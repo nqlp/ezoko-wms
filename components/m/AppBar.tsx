@@ -9,7 +9,6 @@ import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 interface AppBarProps {
     title: string;
@@ -43,7 +42,6 @@ export default function AppBarProps({
         setAnchorEl(event.currentTarget);
     };
 
-    const router = useRouter();
     const handleClose = () => {
         setAnchorEl(null);
     }
@@ -54,7 +52,7 @@ export default function AppBarProps({
 
     const handleLogout = () => {
         handleClose();
-        router.push("/api/auth/logout");
+        window.location.assign("/api/auth/logout");
     }
 
     const initials = getAvatarInitials(shopifyUserName, shopifyUserEmail);
