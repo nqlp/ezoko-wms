@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import SearchIcon from "@mui/icons-material/Search";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Box, Button, TextField } from "@mui/material";
 
 interface ScanInputProps {
     onSubmit: (barcode: string) => void | Promise<void>;
@@ -14,35 +13,66 @@ export default function ScanInput({ onSubmit }: ScanInputProps) {
     const bufferRef = useRef("");
     const catcherRef = useRef<HTMLDivElement | null>(null);
     const manualInputRef = useRef<HTMLInputElement | null>(null);
+    const queueRef = useRef<string[]>([]);
+    const processingRef = useRef(false);
 
-    const focusCatcher = () => {
-        catcherRef.current?.focus();
-    };
-
-    useEffect(() => {
-        focusCatcher();
+    const focusCatcher = useCallback(() => {
+        requestAnimationFrame(() => {
+            catcherRef.current?.focus();
+        });
     }, []);
+
+    const processQueue = useCallback(async () => {
+        if (processingRef.current) {
+            return;
+        }
+
+        processingRef.current = true;
+
+        try {
+            while (queueRef.current.length > 0) {
+                const barcode = queueRef.current.shift();
+                if (!barcode) {
+                    continue;
+                }
+
+                await onSubmit(barcode);
+            }
+        } finally {
+            processingRef.current = false;
+            if (!isManualMode) {
+                focusCatcher();
+            }
+        }
+    }, [focusCatcher, isManualMode, onSubmit]);
+
+    const enqueueScan = useCallback((barcode: string) => {
+        queueRef.current.push(barcode);
+        void processQueue();
+    }, [processQueue]);
 
     useEffect(() => {
         if (isManualMode) {
             manualInputRef.current?.focus();
+            return;
         }
-    }, [isManualMode]);
 
-    const handleKeyDown = async (e: React.KeyboardEvent<HTMLDivElement>) => {
+        focusCatcher();
+    }, [focusCatcher, isManualMode]);
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
         if (isManualMode) {
             return;
         }
 
         if (e.key === "Enter" || e.key === "NumpadEnter") {
+            e.preventDefault();
             const scanned = bufferRef.current.trim();
             bufferRef.current = "";
 
             if (scanned) {
-                await onSubmit(scanned);
+                enqueueScan(scanned);
             }
-
-            focusCatcher();
             return;
         }
 
@@ -68,47 +98,31 @@ export default function ScanInput({ onSubmit }: ScanInputProps) {
         focusCatcher();
     };
 
-    const closeManualMode = () => {
-        setManualValue("");
-        setIsManualMode(false);
-        focusCatcher();
-    };
-
     return (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
             <Box
                 ref={catcherRef}
                 tabIndex={0}
                 onKeyDown={handleKeyDown}
-                sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    borderRadius: 1,
-                    border: "1px solid var(--ezoko-ink)",
-                    backgroundColor: "var(--ezoko-paper)",
-                    color: "var(--ezoko-ink)",
-                    px: 1.5,
-                    py: 0.75,
-                    minHeight: 44,
-                    outline: "none",
+                onBlur={() => {
+                    if (!isManualMode) {
+                        setTimeout(() => catcherRef.current?.focus(), 0);
+                    }
                 }}
-            >
-                <SearchIcon sx={{ fontSize: 20, width: 20, height: 20, flexShrink: 0 }} />
-                <Typography variant="body2" sx={{ lineHeight: 1.2 }}>
-                    SCAN
-                </Typography>
-            </Box>
-
-            {!isManualMode && (
-                <Button
-                    variant="outlined"
-                    onClick={() => setIsManualMode(true)}
-                    sx={{ alignSelf: "flex-start" }}
-                >
-                    MANUAL MODE
-                </Button>
-            )}
+                aria-label="Barcode scanner catcher"
+                sx={{
+                    // Keep focusable for scanner key events, but hide from visual layout.
+                    position: "absolute",
+                    width: 1,
+                    height: 1,
+                    p: 0,
+                    m: -1,
+                    overflow: "hidden",
+                    clip: "rect(0 0 0 0)",
+                    whiteSpace: "nowrap",
+                    border: 0,
+                }}
+            />
 
             {isManualMode && (
                 <Box sx={{ display: "flex", gap: 1 }}>
@@ -121,16 +135,10 @@ export default function ScanInput({ onSubmit }: ScanInputProps) {
                         onKeyDown={(e) => {
                             if (e.key === "Enter") {
                                 e.preventDefault();
-                                void submitManualValue();
+                                submitManualValue();
                             }
                         }}
                     />
-                    <Button variant="contained" onClick={() => void submitManualValue()}>
-                        OK
-                    </Button>
-                    <Button variant="text" onClick={closeManualMode}>
-                        CANCEL
-                    </Button>
                 </Box>
             )}
         </Box>
