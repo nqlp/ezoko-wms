@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ProductVariant } from "@/lib/types/ProductVariant";
+import { requestScanRefocus } from "@/components/m/scanner/focusBus";
 
 type VariantCardProps = {
     foundProduct: ProductVariant | null;
@@ -9,14 +10,10 @@ export default function VariantCard({ foundProduct }: VariantCardProps) {
     const [isMagnified, setIsMagnified] = useState(false);
     const [isMobile, setIsMobile] = useState(false);
 
-    if (!foundProduct) {
-        return null;
-    }
-
-    const variantImage = foundProduct?.media?.nodes?.[0]?.image;
-    const productImage = foundProduct?.product?.featuredMedia?.image;
-    const displayImage = variantImage ?? productImage;
-    const displayImageAlt = displayImage?.altText;
+    const closeMagnified = useCallback(() => {
+        setIsMagnified(false);
+        requestScanRefocus("variant-modal-close");
+    }, []);
 
     useEffect(() => {
         const media = window.matchMedia("(pointer: coarse)");
@@ -32,16 +29,28 @@ export default function VariantCard({ foundProduct }: VariantCardProps) {
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key == "Escape") {
-                setIsMagnified(false);
+            if (e.key === "Escape") {
+                closeMagnified();
             }
         };
 
         if (isMagnified && !isMobile) {
             window.addEventListener("keydown", handleKeyDown);
         }
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isMagnified, isMobile]);
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [closeMagnified, isMagnified, isMobile]);
+
+    if (!foundProduct) {
+        return null;
+    }
+
+    const variantImage = foundProduct.media?.nodes?.[0]?.image;
+    const productImage = foundProduct.product?.featuredMedia?.image;
+    const displayImage = variantImage ?? productImage;
+    const displayImageAlt = displayImage?.altText;
 
     return (
         <div className="mt-4 border-(--ezoko-ink) bg-(--ezoko-mint)">
@@ -89,7 +98,7 @@ export default function VariantCard({ foundProduct }: VariantCardProps) {
             {isMagnified && displayImage && !isMobile && (
                 <div
                     className="fixed inset-0 z-50 flex justify-center p-4 bg-(--ezoko-paper)/50 backdrop-blur-sm"
-                    onClick={() => setIsMagnified(false)}
+                    onClick={closeMagnified}
                 >
                     <img
                         src={displayImage.url}
@@ -98,7 +107,7 @@ export default function VariantCard({ foundProduct }: VariantCardProps) {
                     />
                     <button
                         className="absolute top-4 right-4 cursor-pointer text-(--ezoko-ink) text-3xl font-bold"
-                        onClick={() => setIsMagnified(false)}
+                        onClick={closeMagnified}
                     >
                         X
                     </button>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import ScanInput from "./ScanInput";
 import SnackBar from "./SnackBar";
 import BinLocationTable from "./BinLocationTable";
@@ -9,6 +10,7 @@ import Divider from "@mui/material/Divider";
 import { useMobileScanner } from "./useMobileScanner";
 import MoveQtyControl from "./MoveQtyControl";
 import type { ScannerMode } from "./scanner/scannerTypes";
+import { requestScanRefocus } from "./scanner/focusBus";
 
 interface MobileScannerProps {
     mode: ScannerMode;
@@ -33,6 +35,10 @@ export default function MobileScanner({ mode }: MobileScannerProps) {
         variant,
     } = useMobileScanner(mode);
 
+    useEffect(() => {
+        requestScanRefocus("mobile-scanner-mount");
+    }, []);
+
     return (
         <div>
             <ScanInput onSubmit={handleScan} />
@@ -45,28 +51,27 @@ export default function MobileScanner({ mode }: MobileScannerProps) {
                 </Typography>
             )}
 
-            {/* Snackbar Error (bottom) */}
             {errorMessage && (
                 <SnackBar
                     message={errorMessage}
                     onClose={closeError}
+                    onAfterClose={() => requestScanRefocus("snackbar-close")}
                     autoHideDuration={errorAutoHideDuration}
                     severity="error"
                 />
             )}
 
-            {/* Snackbar Success */}
             {successMessage && (
                 <SnackBar
                     message={successMessage}
                     onClose={closeSuccess}
+                    onAfterClose={() => requestScanRefocus("snackbar-close")}
                     autoHideDuration={successAutoHideDuration}
                     severity="success"
                 />
             )}
             {loading && <p>Loading...</p>}
 
-            {/* Display variant details if found */}
             {variant && <VariantCard foundProduct={variant} />}
 
             {stockLocation && stockLocation.length > 0 && (
@@ -79,7 +84,6 @@ export default function MobileScanner({ mode }: MobileScannerProps) {
                 />
             )}
 
-            {/* Show move qty control if a bin location is selected */}
             {selectedBins.length > 0 && (
                 <>
                     <Divider sx={{ my: 2 }} />
@@ -87,5 +91,5 @@ export default function MobileScanner({ mode }: MobileScannerProps) {
                 </>
             )}
         </div>
-    )
-};
+    );
+}

@@ -1,31 +1,39 @@
 "use client";
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import Alert from "@mui/material/Alert";
 
 interface SnackbarProps {
-    message: string,
+    message: string;
     onClose: () => void;
-    autoHideDuration?: number; // in milliseconds
+    onAfterClose?: () => void;
+    autoHideDuration?: number;
     severity?: "error" | "warning" | "info" | "success";
 }
 
-export default function SnackBar({ message, onClose, autoHideDuration, severity = "error" }: SnackbarProps) {
+export default function SnackBar({ message, onClose, onAfterClose, autoHideDuration, severity = "error" }: SnackbarProps) {
+    const handleClose = useCallback(() => {
+        onClose();
+        onAfterClose?.();
+    }, [onClose, onAfterClose]);
+
     useEffect(() => {
         if (message && autoHideDuration) {
             const timer = setTimeout(() => {
-                onClose();
+                handleClose();
             }, autoHideDuration);
 
             return () => clearTimeout(timer);
         }
-    }, [message, autoHideDuration, onClose]);
+    }, [message, autoHideDuration, handleClose]);
 
-    if (!message) return null;
+    if (!message) {
+        return null;
+    }
 
     return (
         <Alert
-            onClose={onClose}
+            onClose={handleClose}
             severity={severity}
             variant="filled"
             sx={{

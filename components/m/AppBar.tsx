@@ -9,6 +9,7 @@ import Avatar from "@mui/material/Avatar";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import { useState } from "react";
+import { requestScanRefocus } from "./scanner/focusBus";
 
 interface AppBarProps {
     title: string;
@@ -36,15 +37,16 @@ export default function AppBarProps({
     shopifyUserEmail,
 }: AppBarProps) {
 
-    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const open = Boolean(anchorEl);
+    const [anchorElement, setAnchorElement] = useState<null | HTMLElement>(null);
+    const open = Boolean(anchorElement);
     const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
-        setAnchorEl(event.currentTarget);
+        setAnchorElement(event.currentTarget);
     };
 
     const handleClose = () => {
-        setAnchorEl(null);
-    }
+        setAnchorElement(null);
+        requestScanRefocus("avatar-menu-close");
+    };
 
     const handleMenuClick = () => {
         onMenuClick();
@@ -53,23 +55,20 @@ export default function AppBarProps({
     const handleLogout = () => {
         handleClose();
         window.location.assign("/api/auth/logout");
-    }
+    };
 
     const initials = getAvatarInitials(shopifyUserName, shopifyUserEmail);
     return (
         <AppBar position="absolute" color="primary" sx={{ backgroundColor: "var(--ezoko-ink)" }}>
             <Toolbar>
-                {/* Hamburger menu */}
                 <IconButton edge="start" color="inherit" aria-label="menu" onClick={handleMenuClick}>
                     <MenuIcon />
                 </IconButton>
 
-                {/* Title */}
                 <Typography variant="h6" color="inherit" component="div" sx={{ flexGrow: 1 }}>
                     {title}
                 </Typography>
 
-                {/* User Avatar */}
                 <Avatar
                     sx={{ bgcolor: "var(--ezoko-mint)", color: "var(--ezoko-ink)", width: 32, height: 32 }}
                     aria-label="account avatar"
@@ -78,7 +77,7 @@ export default function AppBarProps({
                     {initials}
                 </Avatar>
                 <Menu
-                    anchorEl={anchorEl}
+                    anchorEl={anchorElement}
                     open={open}
                     onClose={handleClose}
                 >

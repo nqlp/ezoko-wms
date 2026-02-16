@@ -1,138 +1,210 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import SearchIcon from "@mui/icons-material/Search";
-import { Box, Button, TextField, Typography } from "@mui/material";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Box, TextField } from "@mui/material";
+import { WMS_SCAN_REFOCUS_EVENT } from "./scanner/focusBus";
 
 interface ScanInputProps {
     onSubmit: (barcode: string) => void | Promise<void>;
 }
 
+function isEditableElement(element: Element | null): boolean {
+    if (!element) {
+        return false;
+    }
+
+    if (element instanceof HTMLInputElement) {
+        return true;
+    }
+
+    if (element instanceof HTMLTextAreaElement) {
+        return true;
+    }
+
+    if (element instanceof HTMLSelectElement) {
+        return true;
+    }
+
+    return element instanceof HTMLElement && element.isContentEditable;
+}
+
 export default function ScanInput({ onSubmit }: ScanInputProps) {
-    const [isManualMode, setIsManualMode] = useState(false);
     const [manualValue, setManualValue] = useState("");
-    const bufferRef = useRef("");
     const catcherRef = useRef<HTMLDivElement | null>(null);
-    const manualInputRef = useRef<HTMLInputElement | null>(null);
+    const scanBufferRef = useRef("");
+    const manualFocusedRef = useRef(false);
+    const queueRef = useRef<string[]>([]);
+    const processingRef = useRef(false);
 
-    const focusCatcher = () => {
-        catcherRef.current?.focus();
-    };
+    const focusCatcher = useCallback((force = false) => {
+        const catcher = catcherRef.current;
 
-    useEffect(() => {
-        focusCatcher();
-    }, []);
-
-    useEffect(() => {
-        if (isManualMode) {
-            manualInputRef.current?.focus();
-        }
-    }, [isManualMode]);
-
-    const handleKeyDown = async (e: React.KeyboardEvent<HTMLDivElement>) => {
-        if (isManualMode) {
+        if (!catcher) {
             return;
         }
 
-        if (e.key === "Enter" || e.key === "NumpadEnter") {
-            const scanned = bufferRef.current.trim();
-            bufferRef.current = "";
+        if (!force && manualFocusedRef.current) {
+            return;
+        }
 
-            if (scanned) {
-                await onSubmit(scanned);
+        const activeElement = document.activeElement;
+        if (!force && activeElement && activeElement !== catcher && activeElement !== document.body) {
+            return;
+        }
+
+        catcher.focus();
+    }, []);
+
+    const processQueue = useCallback(async () => {
+        if (processingRef.current) {
+            return;
+        }
+
+        processingRef.current = true;
+
+        try {
+            while (queueRef.current.length > 0) {
+                // shift is used instead of pop to ensure FIFO order
+                const nextBarcode = queueRef.current.shift();
+
+                if (!nextBarcode) {
+                    continue;
+                }
+
+                await onSubmit(nextBarcode);
+            }
+        } finally {
+            processingRef.current = false;
+            focusCatcher(true);
+        }
+    }, [focusCatcher, onSubmit]);
+
+    // using a queue for FIFO
+    const enqueueSubmit = useCallback(
+        (barcode: string) => {
+            const value = barcode.trim();
+            if (!value) {
+                return;
             }
 
-            focusCatcher();
+            queueRef.current.push(value);
+            void processQueue();
+        },
+        [processQueue]
+    );
+
+    useEffect(() => {
+        const refocus: EventListener = (event) => {
+            if (event.type === "visibilitychange" && document.visibilityState !== "visible") {
+                return;
+            }
+
+            focusCatcher(true);
+        }
+
+        window.addEventListener(WMS_SCAN_REFOCUS_EVENT, refocus);
+        document.addEventListener("focus", refocus);
+        document.addEventListener("visibilitychange", refocus);
+        focusCatcher(true);
+
+        return () => {
+            window.removeEventListener(WMS_SCAN_REFOCUS_EVENT, refocus);
+            document.removeEventListener("focus", refocus);
+            document.removeEventListener("visibilitychange", refocus);
+        }
+    }, [focusCatcher]);
+
+    const handleCatcherKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+        if (e.key === "Enter" || e.key === "NumpadEnter") {
+            e.preventDefault();
+            const scannedValue = scanBufferRef.current.trim();
+            scanBufferRef.current = "";
+            enqueueSubmit(scannedValue);
             return;
         }
 
         if (e.key === "Backspace") {
-            bufferRef.current = bufferRef.current.slice(0, -1);
+            scanBufferRef.current = scanBufferRef.current.slice(0, -1);
             return;
         }
 
         if (e.key.length === 1) {
-            bufferRef.current += e.key;
+            scanBufferRef.current += e.key;
         }
     };
 
-    const submitManualValue = async () => {
+    const handleCatcherBlur = () => {
+        window.setTimeout(() => {
+            if (!manualFocusedRef.current) {
+                focusCatcher(false);
+            }
+        }, 0);
+    };
+
+    const submitManualValue = () => {
         const value = manualValue.trim();
         if (!value) {
             return;
         }
 
-        await onSubmit(value);
         setManualValue("");
-        setIsManualMode(false);
-        focusCatcher();
-    };
-
-    const closeManualMode = () => {
-        setManualValue("");
-        setIsManualMode(false);
-        focusCatcher();
+        manualFocusedRef.current = false;
+        enqueueSubmit(value);
+        focusCatcher(true);
     };
 
     return (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <Box sx={{ position: "relative", display: "flex", flexDirection: "column", gap: 1.5 }}>
             <Box
                 ref={catcherRef}
                 tabIndex={0}
-                onKeyDown={handleKeyDown}
+                onKeyDown={handleCatcherKeyDown}
+                onBlur={handleCatcherBlur}
+                aria-label="scan-catcher"
                 sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    borderRadius: 1,
-                    border: "1px solid var(--ezoko-ink)",
-                    backgroundColor: "var(--ezoko-paper)",
-                    color: "var(--ezoko-ink)",
-                    px: 1.5,
-                    py: 0.75,
-                    minHeight: 44,
+                    position: "absolute",
+                    width: 1,
+                    height: 1,
+                    opacity: 0,
+                    overflow: "hidden",
+                    // box does not receive clicks
+                    pointerEvents: "none",
                     outline: "none",
                 }}
+            />
+
+            <Box
+                sx={{
+                    display: "flex",
+                    border: "1px solid var(--ezoko-ink)",
+                }}
             >
-                <SearchIcon sx={{ fontSize: 20, width: 20, height: 20, flexShrink: 0 }} />
-                <Typography variant="body2" sx={{ lineHeight: 1.2 }}>
-                    SCAN
-                </Typography>
-            </Box>
-
-            {!isManualMode && (
-                <Button
+                <TextField
                     variant="outlined"
-                    onClick={() => setIsManualMode(true)}
-                    sx={{ alignSelf: "flex-start" }}
-                >
-                    MANUAL MODE
-                </Button>
-            )}
-
-            {isManualMode && (
-                <Box sx={{ display: "flex", gap: 1 }}>
-                    <TextField
-                        inputRef={manualInputRef}
-                        value={manualValue}
-                        onChange={(e) => setManualValue(e.target.value)}
-                        placeholder="SCAN"
-                        fullWidth
-                        onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                                e.preventDefault();
-                                void submitManualValue();
+                    value={manualValue}
+                    onChange={(e) => setManualValue(e.target.value)}
+                    placeholder="MANUAL BARCODE"
+                    fullWidth
+                    onFocus={() => {
+                        manualFocusedRef.current = true;
+                    }}
+                    onBlur={() => {
+                        manualFocusedRef.current = false;
+                        window.setTimeout(() => {
+                            const activeElement = document.activeElement;
+                            if (!isEditableElement(activeElement)) {
+                                focusCatcher(false);
                             }
-                        }}
-                    />
-                    <Button variant="contained" onClick={() => void submitManualValue()}>
-                        OK
-                    </Button>
-                    <Button variant="text" onClick={closeManualMode}>
-                        CANCEL
-                    </Button>
-                </Box>
-            )}
+                        }, 0);
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                            e.preventDefault();
+                            submitManualValue();
+                        }
+                    }}
+                />
+            </Box>
         </Box>
     );
 }

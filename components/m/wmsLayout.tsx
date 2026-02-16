@@ -12,6 +12,7 @@ import ListItemText from "@mui/material/ListItemText";
 import HomeIcon from "@mui/icons-material/Home";
 import Box from "@mui/material/Box";
 import { useRouter } from "next/navigation";
+import { requestScanRefocus } from "./scanner/focusBus";
 
 interface WmsLayoutProps {
     title: string;
@@ -26,33 +27,69 @@ export default function WmsLayout({
     shopifyUserName,
     shopifyUserEmail,
 }: WmsLayoutProps) {
-    const [mobileOpen, setMobileOpen] = useState(false);
+    const [drawerOpen, setDrawerOpen] = useState(false);
     const router = useRouter();
 
+    const openDrawer = () => {
+        setDrawerOpen(true);
+        requestScanRefocus("drawer-open");
+    };
+
+    const closeDrawer = () => {
+        setDrawerOpen(false);
+        requestScanRefocus("drawer-close");
+    };
+
     const handleDrawerToggle = () => {
-        setMobileOpen(!mobileOpen);
+        if (drawerOpen) {
+            closeDrawer();
+            return;
+        }
+
+        openDrawer();
     };
 
     const drawerContent = (
-        <Box onClick={handleDrawerToggle} sx={{ textAlign: "center" }}>
+        <Box onClick={closeDrawer} sx={{ textAlign: "center" }}>
             <List>
                 <ListItem disablePadding>
-                    <ListItemButton onClick={() => router.push("/m")}>
-                        <ListItemIcon>
+                    <ListItemButton
+                        onClick={() => router.push("/m")}
+                        sx={{ justifyContent: "center", gap: 1 }}>
+                        <ListItemIcon sx={{ minWidth: 0 }}>
                             <HomeIcon />
                         </ListItemIcon>
-                        <ListItemText primary="HOME" />
-                    </ListItemButton>
-                </ListItem>
-                <ListItem disablePadding>
-                    <ListItemButton onClick={() => router.push("/m/move")}>
-                        <ListItemText primary="MOVE" />
+                        <ListItemText
+                            primary="HOME"
+                            sx={{ m: 0, flex: "0 0 auto" }}
+                            slotProps={{ primary: { align: "center" } }}
+                        />
                     </ListItemButton>
                 </ListItem>
 
                 <ListItem disablePadding>
-                    <ListItemButton onClick={() => router.push("/m/putaway")}>
-                        <ListItemText primary="PUTAWAY" />
+                    <ListItemButton
+                        onClick={() => router.push("/m/move")}
+                        sx={{ justifyContent: "center" }}
+                    >
+                        <ListItemText
+                            primary="MOVE"
+                            sx={{ m: 0, flex: "0 0 auto" }}
+                            slotProps={{ primary: { align: "center" } }}
+                        />
+                    </ListItemButton>
+                </ListItem>
+
+                <ListItem disablePadding>
+                    <ListItemButton
+                        onClick={() => router.push("/m/putaway")}
+                        sx={{ justifyContent: "center" }}
+                    >
+                        <ListItemText
+                            primary="PUTAWAY"
+                            sx={{ m: 0, flex: "0 0 auto" }}
+                            slotProps={{ primary: { align: "center" } }}
+                        />
                     </ListItemButton>
                 </ListItem>
             </List>
@@ -69,10 +106,10 @@ export default function WmsLayout({
             />
             <Drawer
                 variant="temporary"
-                open={mobileOpen}
-                onClose={handleDrawerToggle}
+                open={drawerOpen}
+                onClose={closeDrawer}
                 ModalProps={{
-                    keepMounted: true, // Better open performance on mobile
+                    keepMounted: true,
                 }}
             >
                 {drawerContent}
