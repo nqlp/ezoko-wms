@@ -100,7 +100,7 @@ export default function ScanInput({ onSubmit }: ScanInputProps) {
             }
 
             focusCatcher(true);
-        }
+        };
 
         window.addEventListener(WMS_SCAN_REFOCUS_EVENT, refocus);
         document.addEventListener("focus", refocus);
@@ -111,7 +111,7 @@ export default function ScanInput({ onSubmit }: ScanInputProps) {
             window.removeEventListener(WMS_SCAN_REFOCUS_EVENT, refocus);
             document.removeEventListener("focus", refocus);
             document.removeEventListener("visibilitychange", refocus);
-        }
+        };
     }, [focusCatcher]);
 
     const handleCatcherKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
