@@ -43,9 +43,14 @@ export function generateState(): string {
 export function getAuthorizationUrl(
     shop: string,
     state: string,
-    options?: { online?: boolean }
+    options?: { online?: boolean; }
 ): string {
-    const redirectUri = `${process.env.APP_URL}/api/auth/shopify/callback`;
+    const appUrl = process.env.APP_URL?.replace(/\/+$/, "");
+    if (!appUrl) {
+        throw new Error("APP_URL is required to build Shopify OAuth redirect URI");
+    }
+
+    const redirectUri = `${appUrl}/api/auth/shopify/callback`;
     const scopes = process.env.SHOPIFY_OAUTH_SCOPES || "read_inventory,write_inventory";
     const isOnline = options?.online !== false;
 
