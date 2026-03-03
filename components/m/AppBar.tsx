@@ -79,8 +79,8 @@ export default function WmsAppBar({
                     if (errorPayload.message) {
                         message = errorPayload.message;
                     }
-                } catch {
-                    // Keep the default message when response body is not JSON
+                } catch (error) {
+                    console.warn("[Logout] Failed to parse error message from /api/auth/logout", error);
                 }
 
                 setLogoutError(`${message} Redirecting...`);
