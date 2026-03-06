@@ -3,7 +3,7 @@
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { UpdateBinQtyByID } from "./updateBinQty";
 import { logMoveMovement } from "@/lib/stockMovement";
-import { getCurrentUserName } from "@/lib/auth/session";
+import { getSession } from "@/lib/auth/session";
 
 interface MoveStockInput {
     sourceBinId: string;
@@ -27,21 +27,23 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
         moveQty,
         activity = "MOVEMENT",
     } = input;
-    const user = await getCurrentUserName();
+    const session = await getSession();
 
-    if (!user) {
+    if (!session) {
         return {
             success: false,
             message: "User not authenticated"
         };
     }
 
+    const user = session.shopifyUserName;
+
     // Calculate quantities after move
     const sourceQtyAfter = sourceBinQtyBefore - moveQty;
     const destQtyAfter = destinationBinQtyBefore + moveQty;
 
     // Update source bin (decrease)
-    const sourceResult = await UpdateBinQtyByID(sourceBinId, sourceQtyAfter);
+    const sourceResult = await UpdateBinQtyByID(sourceBinId, sourceQtyAfter, session.accessToken);
     if (!sourceResult.success) {
         return {
             success: false,
@@ -50,7 +52,7 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
     }
 
     // Update destination bin (increase)
-    const destResult = await UpdateBinQtyByID(destinationBinId, destQtyAfter);
+    const destResult = await UpdateBinQtyByID(destinationBinId, destQtyAfter, session.accessToken);
     if (!destResult.success) {
         return {
             success: false,

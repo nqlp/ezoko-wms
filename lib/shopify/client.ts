@@ -9,11 +9,14 @@ export class ShopifyClient {
     private envAccessToken?: string;
     private storeDomain?: string;
 
-    constructor() {
+    constructor(accessToken?: string) {
         validateShopifyConfig({ allowMissingAccessToken: true });
         this.apiUrl = shopifyConfig.apiUrl!;
         this.envAccessToken = shopifyConfig.accessToken;
         this.storeDomain = process.env.SHOPIFY_STORE_DOMAIN ?? this.extractStoreDomain(this.apiUrl);
+        if (accessToken) {
+            this.accessToken = accessToken;
+        }
     }
 
     private extractStoreDomain(apiUrl: string): string | undefined {

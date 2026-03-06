@@ -5,9 +5,9 @@ import { ShopifyClient } from "@/lib/shopify/client";
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { UpdateStockResult } from "@/lib/types/ApiResponse";
 
-export async function UpdateBinQtyByID(id: string, newQty: number): Promise<ApiResponse<UpdateStockResult>> {
+export async function UpdateBinQtyByID(id: string, newQty: number, accessToken?: string): Promise<ApiResponse<UpdateStockResult>> {
     try {
-        const client = new ShopifyClient();
+        const client = new ShopifyClient(accessToken);
         const productsApi = new ProductsApi(client);
 
         const result = await productsApi.updateMetaobjectQty(id, newQty.toString());
