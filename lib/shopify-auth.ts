@@ -14,10 +14,10 @@ import crypto from "crypto";
 
 // Initialize the Shopify API client
 export const shopify = shopifyApi({
-    apiKey: process.env.SHOPIFY_CLIENT_ID_BIN_LOCATION_EXTENSION!,
-    apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET_BIN_LOCATION_EXTENSION!,
+    apiKey: process.env.SHOPIFY_CLIENT_ID!,
+    apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET!,
     scopes: (process.env.SHOPIFY_OAUTH_SCOPES || "read_inventory,write_inventory").split(","),
-    hostName: process.env.APP_URL ? new URL(process.env.APP_URL).hostname : "localhost",
+    hostName: process.env.SHOPIFY_APP_URL ? new URL(process.env.SHOPIFY_APP_URL).hostname : "localhost",
     apiVersion: ApiVersion.January26,
     isEmbeddedApp: false,
 });
@@ -45,7 +45,7 @@ export function getAuthorizationUrl(
     state: string,
     options?: { online?: boolean; }
 ): string {
-    const appUrl = process.env.APP_URL?.replace(/\/+$/, "");
+    const appUrl = process.env.SHOPIFY_APP_URL?.replace(/\/+$/, "");
     if (!appUrl) {
         throw new Error("APP_URL is required to build Shopify OAuth redirect URI");
     }
@@ -56,7 +56,7 @@ export function getAuthorizationUrl(
 
     // Build authorization URL for online (per-user) access tokens
     const baseUrl = `https://${shop}/admin/oauth/authorize?` +
-        `client_id=${process.env.SHOPIFY_CLIENT_ID_BIN_LOCATION_EXTENSION}` +
+        `client_id=${process.env.SHOPIFY_CLIENT_ID}` +
         `&scope=${scopes}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
         `&state=${state}`;
@@ -86,8 +86,8 @@ export async function exchangeCodeForToken(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            client_id: process.env.SHOPIFY_CLIENT_ID_BIN_LOCATION_EXTENSION!,
-            client_secret: process.env.SHOPIFY_CLIENT_SECRET_BIN_LOCATION_EXTENSION!,
+            client_id: process.env.SHOPIFY_CLIENT_ID!,
+            client_secret: process.env.SHOPIFY_CLIENT_SECRET!,
             code,
         }),
     });
