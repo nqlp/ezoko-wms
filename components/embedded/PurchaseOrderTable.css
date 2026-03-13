@@ -29,3 +29,38 @@
   background: #ffe6ef;
   color: var(--danger);
 }
+
+/* Activity chips (Logs page) */
+.activity-chip {
+  display: inline-block;
+  border-radius: 999px;
+  padding: 0.18rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.activity-info {
+  background: #e9f4ff;
+  color: #135db5;
+}
+
+.activity-success {
+  background: #edf9ef;
+  color: #1a7a2e;
+}
+
+.activity-warning {
+  background: #fff8e1;
+  color: #a05c00;
+}
+
+.activity-critical {
+  background: #ffe6ef;
+  color: #c0002a;
+}
+
+.activity-auto {
+  background: #f4f5f7;
+  color: #596273;
+}

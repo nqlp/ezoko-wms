@@ -1,6 +1,7 @@
 "use client";
 
 import { LogRow } from "@/lib/logs/service";
+import './PurchaseOrderTable.css';
 
 type ChipTone = "info" | "warning" | "success" | "critical" | "auto";
 
@@ -13,6 +14,11 @@ const activityTone: Record<string, ChipTone> = {
     GOODS_ISSUE: "critical",
     INV_COUNTING: "auto",
 };
+
+function activityClass(activity: string): string {
+    const tone = activityTone[activity] ?? "auto";
+    return `activity-chip activity-${tone}`;
+}
 
 function formatDate(iso: string) {
     return new Date(iso.toString()).toLocaleString("en-CA", {
@@ -46,12 +52,9 @@ export default function StockMovementsTable({ logs }: { logs: LogRow[] }) {
                         <s-table-row key={log.id} hover>
                             <s-table-cell>{formatDate(log.createdAt)}</s-table-cell>
                             <s-table-cell>
-                                <s-chip
-                                    tone={activityTone[log.activity] ?? "auto"}
-                                    size="small"
-                                >
+                                <span className={activityClass(log.activity)}>
                                     {log.activity}
-                                </s-chip>
+                                </span>
                             </s-table-cell>
                             <s-table-cell>{log.user ?? "—"}</s-table-cell>
                             <s-table-cell>{log.barcode ?? "—"}</s-table-cell>
