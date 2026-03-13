@@ -51,6 +51,7 @@ export default function WmsLayout({
 
     const drawerContent = (
         <Box onClick={closeDrawer} sx={{ textAlign: "center" }}>
+            <Toolbar />
             <List>
                 <ListItem disablePadding>
                     <ListItemButton
