@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
     cookieStore.delete("shopify_auth_type");
 
     try {
-        const appUrl = process.env.APP_URL ?? request.nextUrl.origin;
+        const appUrl = process.env.SHOPIFY_APP_URL ?? request.nextUrl.origin;
         const shopDomain = shop ?? process.env.SHOPIFY_STORE_DOMAIN;
         if (!shopDomain) {
             return NextResponse.json(

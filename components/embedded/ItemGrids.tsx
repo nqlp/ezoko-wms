@@ -161,7 +161,7 @@ export function ItemGrids({ readOnly, data, popovers, actions }: ItemGridsProps)
                             }
                           }}
                         />
-                        {line.skuError ? <s-text color="critical">{line.skuError}</s-text> : null}
+                        {line.skuError ? <span className="sku-error">{line.skuError}</span> : null}
                       </s-stack>
                     </td>
 

@@ -123,3 +123,9 @@ s-button.title-suggest-btn {
   justify-content: flex-start;
   text-align: left;
 }
+
+/* SKU error message */
+.sku-error {
+  color: #d72c0d;
+  font-size: 0.8125rem;
+}

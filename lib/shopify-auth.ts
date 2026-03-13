@@ -47,7 +47,7 @@ export function getAuthorizationUrl(
 ): string {
     const appUrl = process.env.SHOPIFY_APP_URL?.replace(/\/+$/, "");
     if (!appUrl) {
-        throw new Error("APP_URL is required to build Shopify OAuth redirect URI");
+        throw new Error("SHOPIFY_APP_URL is required to build Shopify OAuth redirect URI");
     }
 
     const redirectUri = `${appUrl}/api/auth/shopify/callback`;
