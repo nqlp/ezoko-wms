@@ -11,19 +11,19 @@ interface TokenExchangeResponse {
 
 async function runTokenExchange(shop: string, sessionToken: string): Promise<TokenExchangeResponse> {
   const body = new URLSearchParams({
-    client_id: env.SHOPIFY_API_KEY,
-    client_secret: env.SHOPIFY_API_SECRET,
-    grant_type: 'urn:ietf:params:oauth:grant-type:token-exchange',
+    client_id: env.SHOPIFY_CLIENT_ID,
+    client_secret: env.SHOPIFY_CLIENT_SECRET,
+    grant_type: "urn:ietf:params:oauth:grant-type:token-exchange",
     subject_token: sessionToken,
-    subject_token_type: 'urn:ietf:params:oauth:token-type:id_token',
-    requested_token_type: 'urn:shopify:params:oauth:token-type:offline-access-token'
+    subject_token_type: "urn:ietf:params:oauth:token-type:id_token",
+    requested_token_type: "urn:shopify:params:oauth:token-type:offline-access-token"
   });
 
   const response = await fetch(`https://${shop}/admin/oauth/access_token`, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/x-www-form-urlencoded',
-      Accept: 'application/json'
+      "Content-Type": "application/x-www-form-urlencoded",
+      Accept: "application/json"
     },
     body
   });

@@ -10,7 +10,7 @@ export interface AuthenticatedSession {
   payload: JWTPayload;
 }
 
-const JWT_SECRET = new TextEncoder().encode(env.SHOPIFY_API_SECRET);
+const JWT_SECRET = new TextEncoder().encode(env.SHOPIFY_CLIENT_SECRET);
 
 function extractBearerToken(request: Request): string {
   const authHeader = request.headers.get("authorization");
@@ -47,7 +47,7 @@ export async function authenticateSessionToken(request: Request): Promise<Authen
 
   const verification = await jwtVerify(sessionToken, JWT_SECRET, {
     algorithms: ["HS256"],
-    audience: env.SHOPIFY_API_KEY
+    audience: env.SHOPIFY_CLIENT_ID,
   }).catch(() => {
     throw new ApiError(401, "Session token verification failed");
   });
