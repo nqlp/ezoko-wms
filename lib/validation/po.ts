@@ -8,9 +8,9 @@ const poHeaderStatusSchema = z.enum(PO_HEADER_STATUS);
 
 const nonNegativeMoneySchema = z
   .number()
-  .finite()
+  .refine(Number.isFinite, "Number must be finite")
   .min(0)
-  .refine((value) => Number(value.toFixed(2)) === value, 'Value must have at most 2 decimal places');
+  .refine((value) => Number(value.toFixed(2)) === value, "Value must have at most 2 decimal places");
 
 const optionalDateSchema = z
   .string()
@@ -23,7 +23,7 @@ const optionalDateSchema = z
     }
     return value;
   })
-  .refine((value) => value === null || !Number.isNaN(Date.parse(value)), 'Invalid date');
+  .refine((value) => value === null || !Number.isNaN(Date.parse(value)), "Invalid date");
 
 const lineSchema = z.object({
   existingPoItem: z.number().int().positive().optional(),
@@ -72,29 +72,29 @@ export const listPurchaseOrderFilterSchema = z.object({
   createdAtStart: z.string().optional(),
   createdAtEnd: z.string().optional(),
   importDuties: z
-    .enum(['true', 'false'])
+    .enum(["true", "false"])
     .optional()
     .transform((value) => {
       if (!value) {
         return undefined;
       }
-      return value === 'true';
+      return value === "true";
     }),
   importType: importTypeSchema.optional(),
   hasNotes: z
-    .enum(['true', 'false'])
+    .enum(["true", "false"])
     .optional()
     .transform((value) => {
       if (!value) {
         return undefined;
       }
-      return value === 'true';
+      return value === "true";
     }),
   sortBy: z
-    .enum(['poNumber', 'createdAt', 'expectedDate', 'status', 'vendor'])
+    .enum(["poNumber", "createdAt", "expectedDate", "status", "vendor"])
     .optional()
     .default('createdAt'),
-  sortDirection: z.enum(['asc', 'desc']).optional().default('desc'),
+  sortDirection: z.enum(["asc", "desc"]).optional().default("desc"),
   sku: z.string().trim().optional()
 });
 

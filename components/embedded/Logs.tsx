@@ -2,23 +2,16 @@
 
 import { LogRow } from "@/lib/logs/service";
 
-type Chip =
-    "primary"
-    | "warning"
-    | "success"
-    | "info"
-    | "secondary"
-    | "error"
-    | "default";
+type ChipTone = "info" | "warning" | "success" | "critical" | "auto";
 
-const activityColor: Record<string, Chip> = {
-    MOVEMENT: "primary",
+const activityTone: Record<string, ChipTone> = {
+    MOVEMENT: "info",
     CORRECTION: "warning",
     GOODS_RECEIPT: "success",
     PUTAWAY: "info",
-    PICKING: "secondary",
-    GOODS_ISSUE: "error",
-    INV_COUNTING: "default",
+    PICKING: "auto",
+    GOODS_ISSUE: "critical",
+    INV_COUNTING: "auto",
 };
 
 function formatDate(iso: string) {
@@ -54,7 +47,7 @@ export default function StockMovementsTable({ logs }: { logs: LogRow[] }) {
                             <s-table-cell>{formatDate(log.createdAt)}</s-table-cell>
                             <s-table-cell>
                                 <s-chip
-                                    color={activityColor[log.activity] ?? "default"}
+                                    tone={activityTone[log.activity] ?? "auto"}
                                     size="small"
                                 >
                                     {log.activity}
