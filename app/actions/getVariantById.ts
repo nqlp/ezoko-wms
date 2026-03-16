@@ -24,14 +24,24 @@ export async function getVariantById(
             };
         }
 
-        return { success: true, data: productVariants[0] };
+        return {
+            success: true,
+            data: productVariants[0]
+        };
+        
     } catch (error) {
         console.error("Error fetching product by ID:", error);
 
         if (error instanceof Error) {
-            return { success: false, message: error.message };
+            return {
+                success: false,
+                message: error.message
+            };
         }
 
-        return { success: false, message: "Server error" };
+        return {
+            success: false,
+            message: "Server error"
+        };
     }
 }

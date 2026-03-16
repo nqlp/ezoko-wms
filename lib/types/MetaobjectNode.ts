@@ -1,7 +1,1 @@
-import { MetaobjectField } from "./MetaobjectField";
-
-export type MetaobjectNode = {
-  __typename: string;
-  handle: string;
-  fields: MetaobjectField[];
-};
+export type { MetaobjectNode } from "@shared/types/index";

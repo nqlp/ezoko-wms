@@ -54,6 +54,7 @@ query GetVariantByBarcode($query: String!) {
                     value
                     reference {
                       ... on Metaobject {
+                        id
                         handle
                         fields {
                           key

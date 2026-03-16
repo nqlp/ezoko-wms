@@ -11,7 +11,12 @@ interface SnackbarProps {
     severity?: "error" | "warning" | "info" | "success";
 }
 
-export default function SnackBar({ message, onClose, onAfterClose, autoHideDuration, severity = "error" }: SnackbarProps) {
+export default function SnackBar({
+    message,
+    onClose,
+    onAfterClose,
+    autoHideDuration,
+    severity = "error" }: SnackbarProps) {
     const handleClose = useCallback(() => {
         onClose();
         onAfterClose?.();

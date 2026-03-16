@@ -43,7 +43,6 @@ export default function Page() {
         inventoryItemId ?? null,
         locationId ?? null,
         shopifyOnHand,
-        foundProduct?.id ?? null,
         foundProduct?.barcode ?? null
       );
 
@@ -87,7 +86,7 @@ export default function Page() {
   async function submit() {
     const value = barcode.trim();
     if (!value) {
-      setError("Entrer un barcode valide");
+      setError("Please enter a barcode");
       return;
     }
 

@@ -4,7 +4,6 @@ import { apiFetch } from "@/lib/client/api";
 import { EMPTY_LOG_FILTERS, LogFiltersState, toLogQueryParams } from "@/lib/logs/types";
 import { useEmbeddedBootstrap } from "@/lib/client/hooks";
 
-
 export const useLogsList = () => {
     const [rows, setRows] = useState<LogRow[]>([]);
     const [loading, setLoading] = useState(false);

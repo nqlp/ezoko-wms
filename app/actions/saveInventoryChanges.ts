@@ -18,7 +18,6 @@ export async function saveInventoryChanges(
   inventoryItemId: string | null,
   locationId: string | null,
   shopifyOnHand: number,
-  variantId?: string | null,
   barcode?: string | null
 ): Promise<ApiResponse<SaveInventoryChangesResult>> {
 

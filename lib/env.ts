@@ -5,7 +5,7 @@ const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
   SHOPIFY_CLIENT_ID: z.string().min(1),
   SHOPIFY_CLIENT_SECRET: z.string().min(1),
-  SHOPIFY_APP_URL: z.string().url(),
+  SHOPIFY_APP_URL: z.url(),
   SHOPIFY_SCOPES: z.string().default("read_products"),
   SHOPIFY_API_VERSION: z.string().default("2026-01"),
   TOKEN_ENCRYPTION_KEY: z

@@ -8,7 +8,10 @@ async function exchange(request: Request) {
   try {
     const session = await requireShopifySession(request, { csrf: false });
     await ensureOfflineAccessToken(session);
-    return NextResponse.json({ ok: true, shop: session.shop });
+    return NextResponse.json({
+      ok: true,
+      shop: session.shop
+    });
   } catch (error) {
     return handleRouteError(error);
   }

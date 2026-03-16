@@ -3,7 +3,7 @@
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { UpdateBinQtyByID } from "./updateBinQty";
 import { logMoveMovement } from "@/lib/stockMovement";
-import { getSession } from "@/lib/auth/session";
+import { requireSession } from "@/lib/auth/session";
 
 interface MoveStockInput {
     sourceBinId: string;
@@ -27,7 +27,9 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
         moveQty,
         activity = "MOVEMENT",
     } = input;
-    const session = await getSession();
+
+    const session = await requireSession();
+    const user = session.shopifyUserName;
 
     if (!session) {
         return {
@@ -35,8 +37,6 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
             message: "User not authenticated"
         };
     }
-
-    const user = session.shopifyUserName;
 
     // Calculate quantities after move
     const sourceQtyAfter = sourceBinQtyBefore - moveQty;
@@ -78,5 +78,8 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
             message: `Failed to log stock movement: ${error instanceof Error ? error.message : "Unknown error"}`
         };
     }
-    return { success: true, data: undefined };
+    return {
+        success: true,
+        data: undefined
+    };
 }

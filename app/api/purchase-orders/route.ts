@@ -27,7 +27,7 @@ export async function POST(request: Request) {
   try {
     const session = await requireShopifySession(request);
     const body = (await request.json()) as unknown;
-    const input = parseOrThrow(createPurchaseOrderSchema, body, 'Invalid purchase order payload');
+    const input = parseOrThrow(createPurchaseOrderSchema, body, "Invalid purchase order payload");
     const created = await createPurchaseOrder(session, input);
 
     return NextResponse.json(
