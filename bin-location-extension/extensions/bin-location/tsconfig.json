@@ -17,6 +17,7 @@
     }
   },
   "include": [
+    "shopify.d.ts",
     "src/**/*",
     "../../../shared/**/*"
   ],
