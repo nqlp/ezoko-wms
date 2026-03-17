@@ -66,3 +66,13 @@ export type StockLocation = {
     binLocation: string;
     qty: number;
 }
+
+export type CorrectionLogInput = {
+    barcode?: string | null;
+    variantTitle?: string | null;
+    destinationLocation?: string | null;
+    destinationQty?: number | null;
+    referenceDoc?: string | null;
+    token?: string | null;
+    user?: string | null;
+};

@@ -86,8 +86,8 @@ export default function usePurchaseOrderList() {
                         prefFilters.importDuties == null
                             ? ""
                             : Boolean(prefFilters.importDuties)
-                                ? 'true'
-                                : 'false',
+                                ? "true"
+                                : "false",
                     importType: String(prefFilters.importType ?? ""),
                     hasNotes:
                         prefFilters.hasNotes == null
@@ -100,8 +100,8 @@ export default function usePurchaseOrderList() {
                 };
 
                 const prefSorting = prefsResponse.sorting ?? {};
-                const nextSortBy = (prefSorting.sortBy as SortBy) || 'createdAt';
-                const nextSortDirection = (prefSorting.sortDirection as SortDirection) || 'desc';
+                const nextSortBy = (prefSorting.sortBy as SortBy) || "createdAt";
+                const nextSortDirection = (prefSorting.sortDirection as SortDirection) || "desc";
 
                 setCreateSuccessMessage(null);
                 setFilters(mergedFilters);

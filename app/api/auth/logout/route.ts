@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-
-const SHOPIFY_LOGOUT_URL = "https://accounts.shopify.com/logout";
+import { SHOPIFY_LOGOUT_URL } from "@/lib/constants";
 
 async function performServerLogout() {
     const cookieStore = await cookies();
@@ -62,7 +61,7 @@ function clearAuthCookies(response: NextResponse, clearSessionCookie = true) {
     if (clearSessionCookie) {
         clearCookie("wms_session");
     }
-    
+
     clearCookie("shopify_auth_state");
     clearCookie("shopify_auth_type");
     response.headers.set("Cache-Control", "no-store");

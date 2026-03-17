@@ -1,14 +1,4 @@
-import { Activity } from "@shared/types/index";
-
-interface CorrectionLogInput {
-  user?: string | null;
-  barcode?: string | null;
-  variantTitle?: string | null;
-  destinationLocation?: string | null;
-  destinationQty?: number | null;
-  referenceDoc?: string | null;
-  token?: string | null;
-}
+import { Activity, CorrectionLogInput } from "@shared/types/index";
 
 interface CorrectionStockMovementPayload {
   activity: Activity.CORRECTION;
@@ -68,7 +58,7 @@ function getEndpoint(): string {
  * 
  * @param input - The correction details to log
  */
-export async function logCorrectionMovement(input: CorrectionLogInput): Promise<void> {
+export async function logCorrectionActivity(input: CorrectionLogInput): Promise<void> {
   const endpoint = getEndpoint();
 
   // Resolve user ID from input or token
