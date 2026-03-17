@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { exchangeCodeForToken, generateSessionToken } from "@/lib/shopify-auth";
 import { prisma } from "@/lib/prisma";
+import { encryptAccessToken } from "@/lib/crypto/token-encryption";
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
@@ -49,16 +50,18 @@ export async function GET(request: NextRequest) {
 
         // If offline, update store integration
         if (!isOnline) {
-            await prisma.store_integration.upsert({
+            await prisma.shopInstallation.upsert({
                 where: {
-                    store_domain: shopDomain,
+                    shop: shopDomain,
                 },
                 update: {
-                    access_token: tokenData.accessToken,
+                    encryptedAccessToken: encryptAccessToken(tokenData.accessToken),
+                    scopes: tokenData.scope ?? null,
                 },
                 create: {
-                    store_domain: shopDomain,
-                    access_token: tokenData.accessToken,
+                    shop: shopDomain,
+                    encryptedAccessToken: encryptAccessToken(tokenData.accessToken),
+                    scopes: tokenData.scope ?? null,
                 },
             });
 

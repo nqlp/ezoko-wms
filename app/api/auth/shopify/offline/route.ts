@@ -25,7 +25,7 @@ export async function GET() {
     });
 
     // Indicate the type of OAuth flow (online vs offline) in a cookie
-    // Offline: store_integrations
+    // Offline: shop_installation
     cookieStore.set("shopify_auth_type", "offline", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
