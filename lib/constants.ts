@@ -53,6 +53,8 @@ export const TARGET_FIELDS = [
 
 export const PO_CURRENCIES = ["CAD", "USD", "EUR", "JPY", "NOK", "CNY", "AUD", "SGD"] as const;
 
+export const SHOPIFY_LOGOUT_URL = "https://accounts.shopify.com/logout";
+
 export type PoHeaderStatus = (typeof PO_HEADER_STATUS)[number];
 export type PoItemStatus = (typeof PO_ITEM_STATUS)[number];
 export type ImportType = (typeof IMPORT_TYPES)[number];
