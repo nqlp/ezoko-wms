@@ -14,7 +14,7 @@ import {
     validateResponse,
     ShopifyQueryFct,
 } from '../utils/helpers';
-import { logCorrectionMovement, extractUserIdFromToken } from './stockMovementLog';
+import { logCorrectionActivity, extractUserIdFromToken } from './stockMovementLog';
 import { STAFF_MEMBER_QUERY } from '../graphql/queries';
 
 export interface SaveStockParams {
@@ -102,7 +102,7 @@ export async function saveStock(params: SaveStockParams): Promise<SaveStockResul
             },
         });
         validateResponse<UpdateStockResponse>(result, data => data?.metaobjectUpdate?.userErrors);
-        await logCorrectionMovement({
+        await logCorrectionActivity({
             barcode: variantBarcode,
             variantTitle: variantTitle,
             destinationLocation: item.bin,
@@ -165,7 +165,7 @@ async function updateExistingBinQty(
         },
     });
     validateResponse<UpdateStockResponse>(result, data => data?.metaobjectUpdate?.userErrors);
-    await logCorrectionMovement({
+    await logCorrectionActivity({
         barcode: logContext?.variantBarcode,
         variantTitle: logContext?.variantTitle,
         destinationLocation: existing.bin,
