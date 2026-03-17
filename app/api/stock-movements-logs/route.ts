@@ -19,6 +19,11 @@ function getBearerToken(request: NextRequest): string | null {
     return null;
   }
 
+  // ^Bearer — the chain starts with "Bearer"
+  // \s+ — followed by one or more whitespace characters
+  // (.+) — captured group for the token itself (one or more of any character)
+  // $ — end of the string
+  // i — case-insensitive match
   const match = authHeader.match(/^Bearer\s+(.+)$/i);
   return match?.[1] ?? null;
 }
