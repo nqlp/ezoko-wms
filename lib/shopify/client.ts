@@ -2,6 +2,7 @@ import "server-only";
 
 import { shopifyConfig, validateShopifyConfig } from "@/lib/config/shopify";
 import { prisma } from "@/lib/prisma";
+import { decryptAccessToken } from "../crypto/token-encryption";
 
 export class ShopifyClient {
     private apiUrl: string;
@@ -34,12 +35,13 @@ export class ShopifyClient {
 
         // Check if we have an access token stored for the shop domain in DB (offline token)
         if (this.storeDomain) {
-            const integration = await prisma.store_integration.findUnique({
-                where: { store_domain: this.storeDomain },
+            const installation = await prisma.shopInstallation.findUnique({
+                where: { shop: this.storeDomain },
             });
-            // If we have an integration with an access token, use it
-            if (integration?.access_token) {
-                this.accessToken = integration.access_token;
+            
+            // If we have an installed shop with an encrypted token, decrypt and use it
+            if (installation?.encryptedAccessToken) {
+                this.accessToken = decryptAccessToken(installation.encryptedAccessToken);
                 return this.accessToken;
             }
         }

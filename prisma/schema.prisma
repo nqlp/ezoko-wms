@@ -29,11 +29,6 @@ enum Activity {
   INV_COUNTING @map("Inv Counting")
 }
 
-model store_integration {
-  store_domain String @id @default("ezokofishing.myshopify.com")
-  access_token String
-}
-
 model StockMovementLog {
   id                  String   @id @default(uuid())
   createdAt           DateTime @default(now()) @map("created_at")
