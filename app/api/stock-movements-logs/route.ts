@@ -75,6 +75,7 @@ export async function POST(request: NextRequest) {
       destinationLocation,
       destinationQty,
       referenceDoc,
+      user,
     } = body;
 
     // Validate activity
@@ -95,7 +96,7 @@ export async function POST(request: NextRequest) {
         destinationLocation: destinationLocation ?? null,
         destinationQty: typeof destinationQty === "number" ? destinationQty : null,
         referenceDoc: referenceDoc ?? null,
-        user: authenticatedUser.userId,
+        user: user ?? authenticatedUser.userId,
       },
     });
 

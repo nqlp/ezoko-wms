@@ -58,6 +58,10 @@ export function extractUserIdFromToken(token: string): string | null {
 // Public API
 // ============================================================================
 
+function getEndpoint(): string {
+  return "https://ezoko-frontend-test.up.railway.app/api/stock-movements-logs";
+}
+
 /**
  * Logs a stock correction movement to the database.
  * Called when quantities are updated via the Admin UI extension.
