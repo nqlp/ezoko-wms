@@ -4,13 +4,15 @@ import { ShopifyClient } from "@/lib/shopify/client";
 import { ProductsApi } from "@/lib/shopify/productsApi";
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { ProductVariant } from "@/lib/types/ProductVariant";
+import { requireSession } from "@/lib/auth/session";
 
 export async function getVariantByBarcode(
   barcode: string
 ): Promise<ApiResponse<ProductVariant>> {
   try {
     const trimmedBarcode = barcode.trim();
-    const client = new ShopifyClient();
+    const session = await requireSession();
+    const client = new ShopifyClient(session.accessToken);
     const productApi = new ProductsApi(client);
 
     const productVariants = await productApi.findVariantsByBarcode(trimmedBarcode);

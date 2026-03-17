@@ -37,7 +37,7 @@ export async function UpdateBinQtyByID(
         console.error("Error updating bin quantity:", error);
         return {
             success: false,
-            message: "Failed to update bin quantity",
+            message: error instanceof Error ? error.message : "Failed to update bin quantity",
         };
     }
 }
