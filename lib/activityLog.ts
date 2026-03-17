@@ -1,4 +1,4 @@
-/**
+ /**
  * Server-side Stock Movement Logging
  * 
  * This module provides direct database access for logging stock movements
@@ -8,19 +8,11 @@
 
 import { Activity } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { CorrectionLogInput } from "@shared/types";
 
 // ============================================================================
 // Types
 // ============================================================================
-
-type CorrectionLogInput = {
-    barcode?: string | null;
-    variantTitle?: string | null;
-    destinationLocation?: string | null;
-    destinationQty?: number | null;
-    referenceDoc?: string | null;
-    user?: string | null;
-};
 
 type MoveLogInput = {
     activity?: Activity;
@@ -41,7 +33,7 @@ type MoveLogInput = {
  * Logs a correction stock movement directly to the database.
  * Use this from server actions where direct DB access is available.
  */
-export async function logCorrectionMovement(input: CorrectionLogInput): Promise<void> {
+export async function logCorrectionActivity(input: CorrectionLogInput): Promise<void> {
     try {
         await prisma.stockMovementLog.create({
             data: {
@@ -57,7 +49,7 @@ export async function logCorrectionMovement(input: CorrectionLogInput): Promise<
             },
         });
     } catch (error) {
-        console.error("Error logging correction stock movement:", error);
+        console.error("Error logging correction stock activity:", error);
     }
 }
 
@@ -65,7 +57,7 @@ export async function logCorrectionMovement(input: CorrectionLogInput): Promise<
  * Logs a move stock movement directly to the database.
  * Use this from server actions where direct DB access is available.
  */
-export async function logMoveMovement(input: MoveLogInput): Promise<void> {
+export async function logMoveActivity(input: MoveLogInput): Promise<void> {
     try {
         await prisma.stockMovementLog.create({
             data: {
@@ -81,7 +73,7 @@ export async function logMoveMovement(input: MoveLogInput): Promise<void> {
             },
         });
     } catch (error) {
-        console.error("Error logging move stock movement:", error);
+        console.error("Error logging move stock activity:", error);
         throw error;
     }
 }
