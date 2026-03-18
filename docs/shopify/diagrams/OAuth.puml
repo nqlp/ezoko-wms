@@ -1,0 +1,17 @@
+@startuml Online OAuth Flow
+
+actor User
+participant "Mobile App" as MobileApp
+participant "GET /api/auth/shopify" as AuthRoute
+participant "Shopify OAuth Endpoint" as ShopifyOAuth
+participant "GET /api/auth/shopify/callback" as CallbackRoute
+
+User -> MobileApp: Navigate to /m/login
+MobileApp -> AuthRoute: GET /api/auth/shopify
+AuthRoute -> AuthRoute: Set shopify_auth_state cookie\nSet shopify_auth_type cookie
+AuthRoute -> ShopifyOAuth: Redirect to https://{shop}/admin/oauth/authorize?grant
+ShopifyOAuth --> AuthRoute: Redirect back to GET /api/auth/shopify/callback
+AuthRoute -> CallbackRoute: Handle callback, verify state, exchange code for token
+CallbackRoute --> MobileApp: Authentication successful, set session cookie
+User --> MobileApp: Redirected to mobile app with authenticated session
+@enduml
