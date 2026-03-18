@@ -108,7 +108,7 @@ entity "shop_installation" as shop_installation {
   * updated_at : TIMESTAMPTZ
 }
 
-entity "store_integration" as store_integration {
+entity "shop_installation" as shop_installation {
   * **store_domain** : TEXT <<PK>>
   --
   * access_token : TEXT

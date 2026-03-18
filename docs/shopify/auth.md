@@ -23,7 +23,7 @@ Used for system-level access (unattended operations, embedded app).
 
 1. Admin initiates `GET /api/auth/shopify/offline`
 2. Flow is identical to online, but without `grant_options[]=per-user`
-3. A `store_integration` record is created with the store domain and access token
+3. A `shop_installation` record is created with the store domain and access token
 
 **Key files**: `app/api/auth/shopify/`, `lib/shopify-auth.ts`
 

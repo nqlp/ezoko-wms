@@ -18,7 +18,7 @@ Represents warehouse stock movement types.
 
 ## Models
 
-### store_integration
+### shop_installation
 
 Stores Shopify offline access token for system-level API access.
 

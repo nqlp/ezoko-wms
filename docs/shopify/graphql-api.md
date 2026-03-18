@@ -12,7 +12,7 @@ await client.query<T>(query, variables)
 await client.mutate<T>(mutation, variables)
 ```
 
-Token resolution order: constructor argument → `store_integration` table → `SHOPIFY_ACCESS_TOKEN` env var.
+Token resolution order: constructor argument → `shop_installation` table → `SHOPIFY_ACCESS_TOKEN` env var.
 
 ### runShopifyGraphql (`lib/shopify/graphql.ts`)
 
