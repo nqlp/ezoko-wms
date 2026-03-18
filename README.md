@@ -1,6 +1,6 @@
-# Ezoko Frontend
+# Ezoko WMS
 
-Full-stack warehouse management application built with Next.js. It integrates with Shopify to manage inventory at the bin level and provides two interfaces: an embedded Shopify Admin app for back-office operations, and a mobile WMS for warehouse operators.
+Full-stack warehouse management application built with Next.js. It integrates with Shopify to manage inventory at the bin level and provides two interfaces: an embedded Shopify Admin app for back-office operations and a mobile WMS for warehouse operators.
 
 ## Interfaces
 

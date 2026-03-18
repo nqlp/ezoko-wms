@@ -11,8 +11,8 @@ export async function getVariantByBarcode(
 ): Promise<ApiResponse<ProductVariant>> {
   try {
     const trimmedBarcode = barcode.trim();
-    const session = await requireSession();
-    const client = new ShopifyClient(session.accessToken);
+    await requireSession();
+    const client = new ShopifyClient();
     const productApi = new ProductsApi(client);
 
     const productVariants = await productApi.findVariantsByBarcode(trimmedBarcode);

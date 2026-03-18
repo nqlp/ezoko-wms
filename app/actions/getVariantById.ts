@@ -10,8 +10,8 @@ export async function getVariantById(
     variantId: string
 ): Promise<ApiResponse<ProductVariant>> {
     try {
-        const session = await requireSession();
-        const client = new ShopifyClient(session.accessToken);
+        await requireSession();
+        const client = new ShopifyClient();
         const productApi = new ProductsApi(client);
 
         // Use the same method but query by ID instead of barcode

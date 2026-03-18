@@ -43,7 +43,7 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
     const destQtyAfter = destinationBinQtyBefore + moveQty;
 
     // Update source bin (decrease)
-    const sourceResult = await UpdateBinQtyByID(sourceBinId, sourceQtyAfter, session.accessToken);
+    const sourceResult = await UpdateBinQtyByID(sourceBinId, sourceQtyAfter);
     if (!sourceResult.success) {
         return {
             success: false,
@@ -52,7 +52,7 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
     }
 
     // Update destination bin (increase)
-    const destResult = await UpdateBinQtyByID(destinationBinId, destQtyAfter, session.accessToken);
+    const destResult = await UpdateBinQtyByID(destinationBinId, destQtyAfter);
     if (!destResult.success) {
         return {
             success: false,
