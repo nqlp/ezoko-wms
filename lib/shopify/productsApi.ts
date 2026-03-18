@@ -4,9 +4,9 @@ import { ProductVariant } from "@/lib/types/ProductVariant";
 import { StockLocation } from "@/lib/types/StockLocation";
 import { FIND_VARIANTS_BY_BARCODE_QUERY } from "@/lib/shopify/queries/variantQuery";
 import { VariantWithStock } from "@/lib/types/VariantWithStock";
-import { MetaobjectField } from "@/lib/types/MetaobjectField";
+import { MetaobjectField, MetaobjectFieldWithReference } from "@/lib/types/MetaobjectField";
 import { MetaobjectUpdatePayload } from "../types/ShopifyPayload";
-import { UPDATE_METAOBJECT_QTY } from "@/lib/shopify/mutations/updateMetaobjectQty";
+import { METAOBJECT_UPDATE_MUTATION } from "@/lib/shopify/mutations/updateMetaobjectQty";
 import { InventorySetQuantitiesPayload } from "../types/InventorySetQuantities";
 import { SYNC_SHOPIFY_INVENTORY } from "./mutations/updateShopifyInventory";
 
@@ -18,12 +18,13 @@ export class ProductsApi {
   }
 
   async findVariantsByBarcode(barcode: string): Promise<ProductVariant[]> {
+    const trimmedBarcode = barcode.trim();
     const result = await this.client.query<{
       productVariants: {
         nodes: VariantWithStock[];
       };
     }>(FIND_VARIANTS_BY_BARCODE_QUERY, {
-      query: `barcode:${barcode}`,
+      query: `barcode:${trimmedBarcode}`,
     });
 
     const variants = result.productVariants.nodes;
@@ -38,12 +39,15 @@ export class ProductsApi {
 
       const binQty: StockLocation[] = [];
 
-      const getBinName = (fields: MetaobjectField[], fallbackHandle: string) => {
+      const getBinName = (fields: MetaobjectFieldWithReference[], fallbackHandle: string) => {
         const binField = fields.find((field) => field.key === "bin_location");
         const referenceFields = binField?.reference?.fields ?? [];
-        const referenceValue = referenceFields.find((f) => f.key === "bin")?.value;
-        if (referenceValue) {
-          return referenceValue;
+        const referenceValue =
+          referenceFields.find((field) => field.key === "bin_location")?.value ??
+          referenceFields.find((field) => field.key === "bin")?.value;
+
+        if (referenceValue?.trim()) {
+          return referenceValue.trim();
         }
 
         else if (binField?.reference?.handle) {
@@ -78,7 +82,7 @@ export class ProductsApi {
 
   async updateMetaobjectQty(id: string, newQty: string): Promise<MetaobjectUpdatePayload> {
     const result = await this.client.mutate<MetaobjectUpdatePayload>(
-      UPDATE_METAOBJECT_QTY, { id, newQty }
+      METAOBJECT_UPDATE_MUTATION, { id, fields: [{ key: "qty", value: newQty }] }
     );
     return result;
   }

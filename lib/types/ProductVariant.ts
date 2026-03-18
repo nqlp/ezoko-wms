@@ -1,3 +1,4 @@
+import { MetaobjectNode } from "./MetaobjectNode";
 import { StockLocation } from "./StockLocation";
 
 export type ProductVariant = {
@@ -67,18 +68,7 @@ export type ProductVariant = {
             key: string;
             value: string;
             references?: {
-                nodes: Array<{
-                    id: string;
-                    handle: string;
-                    fields: {
-                        key: string;
-                        value: string;
-                        reference?: {
-                            handle?: string;
-                            fields?: { key: string; value: string }[];
-                        } | null;
-                    }[];
-                }>;
+                nodes: MetaobjectNode[];
             };
         }>;
     };

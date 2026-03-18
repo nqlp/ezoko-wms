@@ -1,4 +1,4 @@
-import { MetaobjectField } from "./warehouseStock";
+import { MetaobjectField } from "@shared/types/index";
 
 export interface UpdateStockResponse {
     metaobjectUpdate: {

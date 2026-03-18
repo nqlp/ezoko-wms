@@ -4,7 +4,7 @@ import { ApiResponse } from "@/lib/types/ApiResponse";
 import { StockLocation } from "@/lib/types/StockLocation";
 import { syncShopifyInventory } from "./syncShopifyInventory";
 import { UpdateBinQtyByID } from "./updateBinQty";
-import { logCorrectionMovement } from "@/lib/stockMovement";
+import { logCorrectionActivity } from "@/lib/activityLog";
 
 interface SaveInventoryChangesResult {
   syncedShopify: boolean;
@@ -18,7 +18,6 @@ export async function saveInventoryChanges(
   inventoryItemId: string | null,
   locationId: string | null,
   shopifyOnHand: number,
-  variantId?: string | null,
   barcode?: string | null
 ): Promise<ApiResponse<SaveInventoryChangesResult>> {
 
@@ -75,7 +74,7 @@ export async function saveInventoryChanges(
       await Promise.all(
         binUpdateResults.map(async ({ bin, result }) => {
           if (!result.success) return;
-          await logCorrectionMovement({
+          await logCorrectionActivity({
             barcode,
             destinationLocation: bin.binLocation,
             destinationQty: bin.qty,

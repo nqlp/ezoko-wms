@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ProductVariant } from "@/lib/types/ProductVariant";
+import { requestScanRefocus } from "@/components/m/scanner/focusBus";
 
 type VariantCardProps = {
     foundProduct: ProductVariant | null;
@@ -7,41 +8,56 @@ type VariantCardProps = {
 
 export default function VariantCard({ foundProduct }: VariantCardProps) {
     const [isMagnified, setIsMagnified] = useState(false);
+    const [isMobile, setIsMobile] = useState(false);
+
+    const closeMagnified = useCallback(() => {
+        setIsMagnified(false);
+        requestScanRefocus("variant-modal-close");
+    }, []);
+
+    useEffect(() => {
+        const media = window.matchMedia("(pointer: coarse)");
+        const updateIsMobile = () => setIsMobile(media.matches);
+        updateIsMobile();
+
+        media.addEventListener?.("change", updateIsMobile);
+
+        return () => {
+            media.removeEventListener?.("change", updateIsMobile);
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                closeMagnified();
+            }
+        };
+
+        if (isMagnified && !isMobile) {
+            window.addEventListener("keydown", handleKeyDown);
+        }
+
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+        };
+    }, [closeMagnified, isMagnified, isMobile]);
 
     if (!foundProduct) {
         return null;
     }
 
-    const variantImage = foundProduct?.media?.nodes?.[0]?.image;
-    const productImage = foundProduct?.product?.featuredMedia?.image;
+    const variantImage = foundProduct.media?.nodes?.[0]?.image;
+    const productImage = foundProduct.product?.featuredMedia?.image;
     const displayImage = variantImage ?? productImage;
     const displayImageAlt = displayImage?.altText;
 
-    useEffect(() => {
-        const handleKeyDown = (e: KeyboardEvent) => {
-            if (e.key == "Escape") {
-                setIsMagnified(false);
-            }
-        };
-
-        if (isMagnified) {
-            window.addEventListener("keydown", handleKeyDown);
-        }
-        return () => window.removeEventListener("keydown", handleKeyDown);
-    }, [isMagnified]);
-
     return (
         <div className="mt-4 border-(--ezoko-ink) bg-(--ezoko-mint)">
-            <div>
-                <div>
-                    <h2 className="text-lg font-bold text-(--ezoko-ink)">Product found!</h2>
-                </div>
-            </div>
-
             <div className="mt-4 flex gap-4 items-start">
                 <div
-                    className={`h-28 w-28 border-2 border-(--ezoko-ink) bg-white flex items-center justify-center ${displayImage ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
-                    onClick={() => displayImage && setIsMagnified(true)}
+                    className={`h-28 w-28 border-2 border-(--ezoko-ink) bg-white flex items-center justify-center ${displayImage && !isMobile ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}`}
+                    onClick={() => displayImage && !isMobile && setIsMagnified(true)}
                 >
                     {displayImage ? (
                         <img
@@ -79,10 +95,10 @@ export default function VariantCard({ foundProduct }: VariantCardProps) {
                 </div>
             </div>
 
-            {isMagnified && displayImage && (
+            {isMagnified && displayImage && !isMobile && (
                 <div
                     className="fixed inset-0 z-50 flex justify-center p-4 bg-(--ezoko-paper)/50 backdrop-blur-sm"
-                    onClick={() => setIsMagnified(false)}
+                    onClick={closeMagnified}
                 >
                     <img
                         src={displayImage.url}
@@ -91,7 +107,7 @@ export default function VariantCard({ foundProduct }: VariantCardProps) {
                     />
                     <button
                         className="absolute top-4 right-4 cursor-pointer text-(--ezoko-ink) text-3xl font-bold"
-                        onClick={() => setIsMagnified(false)}
+                        onClick={closeMagnified}
                     >
                         X
                     </button>

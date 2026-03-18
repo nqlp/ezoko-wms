@@ -1,25 +1,4 @@
-interface CorrectionLogInput {
-  user?: string | null;
-  barcode?: string | null;
-  variantTitle?: string | null;
-  destinationLocation?: string | null;
-  destinationQty?: number | null;
-  referenceDoc?: string | null;
-  token?: string | null;
-}
-
-/**
- * IMPORTANT: This enum must stay in sync with prisma/schema.prisma Activity enum.
- * If you add/remove values here, update the Prisma schema too
- */
-enum Activity {
-  CORRECTION = "CORRECTION",
-  GOODS_RECEIPT = "GOODS_RECEIPT",
-  MOVEMENT = "MOVEMENT",
-  PICKING = "PICKING",
-  GOODS_ISSUE = "GOODS_ISSUE",
-  INV_COUNTING = "INV_COUNTING",
-}
+import { Activity, CorrectionLogInput } from "@shared/types/index";
 
 interface CorrectionStockMovementPayload {
   activity: Activity.CORRECTION;
@@ -31,16 +10,6 @@ interface CorrectionStockMovementPayload {
   destinationQty?: number | null;
   referenceDoc?: string | null;
   user?: string | null;
-}
-
-import { API_STOCK_MOVEMENTS_LOGS } from '../config';
-
-/**
- * Returns the stock movement API endpoint URL.
- * URL is defined in config.ts for easy environment switching
- */
-function getEndpoint(): string {
-  return API_STOCK_MOVEMENTS_LOGS;
 }
 
 // ============================================================================
@@ -79,13 +48,17 @@ export function extractUserIdFromToken(token: string): string | null {
 // Public API
 // ============================================================================
 
+function getEndpoint(): string {
+  return "https://ezoko-frontend-test.up.railway.app/api/stock-movements-logs";
+}
+
 /**
  * Logs a stock correction movement to the database.
  * Called when quantities are updated via the Admin UI extension.
  * 
  * @param input - The correction details to log
  */
-export async function logCorrectionMovement(input: CorrectionLogInput): Promise<void> {
+export async function logCorrectionActivity(input: CorrectionLogInput): Promise<void> {
   const endpoint = getEndpoint();
 
   // Resolve user ID from input or token

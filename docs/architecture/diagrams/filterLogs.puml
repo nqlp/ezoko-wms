@@ -1,0 +1,154 @@
+@startuml filterLog
+title Stock Movement Logs - Filter & Fetch Flow
+
+actor User
+participant "LogsPage.tsx" as Page
+participant "useLogsList()" as Hook
+participant "LogsFilters.tsx" as Filters
+participant "toLogQueryParams()" as QueryBuilder
+participant "apiFetch()" as ApiFetch
+participant "GET /api/logs" as ApiRoute
+participant "requireShopifySession()" as Auth
+participant "listLogsFilterSchema\n(Zod)" as Schema
+participant "listLogs()" as Service
+participant "buildLogWhereQuery()" as WhereBuilder
+participant "prismaEzoko\n.stockMovementLog" as Prisma
+participant "StockMovementsTable" as Table
+
+== Initialization ==
+
+Page -> Hook: useLogsList()
+Hook -> Hook: bootstrap via useEmbeddedBootstrap()
+Hook --> Page: bootstrap.loading = true
+
+note over Hook
+    Waits for bootstrap to be ready
+    (Shopify embedded session)
+end note
+
+Hook -> Hook: useEffect → bootstrap ready,\nnot initialized
+Hook -> Hook: loadRows(EMPTY_LOG_FILTERS)
+Hook -> Hook: setInitialized(true)
+
+== Initial Load (empty filters) ==
+
+Hook -> QueryBuilder: toLogQueryParams(EMPTY_LOG_FILTERS,\n"createdAt", "desc")
+QueryBuilder --> Hook: "sortBy=createdAt&sortDirection=desc"
+
+Hook -> ApiFetch: GET /api/logs?sortBy=createdAt&sortDirection=desc
+ApiFetch -> ApiRoute: HTTP GET
+
+ApiRoute -> Auth: requireShopifySession(request, {csrf:false
+}
+)
+Auth --> ApiRoute: session OK
+
+ApiRoute -> Schema: parseOrThrow(listLogsFilterSchema,\nsearchParams)
+Schema --> ApiRoute: filters (sortBy=createdAt, sortDirection=desc)
+
+ApiRoute -> Service: listLogs(filters)
+Service -> WhereBuilder: buildLogWhereQuery(filters)
+WhereBuilder --> Service: where = {}
+(no active filters)
+
+Service -> Prisma: findMany({ where:{}
+    , orderBy:{createdAt:"desc"
+}
+, take:500
+}
+)
+Prisma --> Service: StockMovementLog[]
+
+Service -> Service: map → LogRow[]\n(dates as ISO strings)
+Service --> ApiRoute: LogRow[]
+ApiRoute --> ApiFetch: { logs: LogRow[] }
+ApiFetch --> Hook: response.logs
+
+Hook -> Hook: setRows(logs)\nsetLoading(false)
+Hook --> Page: rows, loading=false
+
+Page -> Table: <StockMovementsTable logs={rows} />
+Table --> User: Table displayed
+
+== Filter Interaction ==
+
+User -> Filters: Edits a filter\n(activity / user / barcode /\nreferenceDoc / dateStart / dateEnd)
+Filters -> Hook: onFiltersChange({ ...filters, [field]: value })
+Hook -> Hook: setFilters(newFilters)
+Filters --> User: UI updated (no request fired)
+
+User -> Filters: Click "Apply filters"
+Filters -> Hook: onApply() → loadRows()
+
+Hook -> Hook: setLoading(true)\nsetError(null)
+Hook -> QueryBuilder: toLogQueryParams(filters, "createdAt", "desc")
+
+note over QueryBuilder
+Only adds non-empty fields to params:
+activity, user, dateStart, dateEnd,
+barcode, referenceDoc + sortBy, sortDirection
+end note
+
+QueryBuilder --> Hook: query string
+
+Hook -> ApiFetch: GET /api/logs?{
+query string}
+ApiFetch -> ApiRoute: HTTP GET
+
+ApiRoute -> Auth: requireShopifySession(...)
+Auth --> ApiRoute: session OK
+
+ApiRoute -> Schema: parseOrThrow(listLogsFilterSchema, searchParams)
+Schema --> ApiRoute: validated filters
+
+ApiRoute -> Service: listLogs(filters)
+Service -> WhereBuilder: buildLogWhereQuery(filters)
+
+note over WhereBuilder
+    For each active filter:
+    • activity     → where.activity = value (exact match)
+    • user         → contains, case-insensitive
+    • barcode      → contains, case-insensitive
+    • referenceDoc → contains, case-insensitive
+    • dateStart/End → createdAt: { gte, lte }
+    (parseDate with endOfDay for dateEnd)
+end note
+
+WhereBuilder --> Service: where {
+    ... }
+    Service -> Prisma: findMany({ where, orderBy:{
+        createdAt:"desc"}, take:500 })
+        Prisma --> Service: StockMovementLog[] (filtered)
+        Service --> ApiRoute: LogRow[]
+        ApiRoute --> ApiFetch: { logs: LogRow[] }
+        ApiFetch --> Hook: response.logs
+        Hook -> Hook: setRows(logs)\nsetLoading(false)
+        Hook --> Page: rows updated
+        Page -> Table: re-render with new logs
+        Table --> User: Filtered table
+
+        == Reset Filters ==
+
+        User -> Filters: Click "Reset"
+        note right: Button enabled only if\nhasActiveFilters = true
+        Filters -> Hook: onReset() → resetFilters()
+        Hook -> Hook: setFilters(EMPTY_LOG_FILTERS)
+        Hook -> Hook: loadRows(EMPTY_LOG_FILTERS)
+        note right of Hook: Fires immediately with empty filters\n(no re-render wait)
+
+        Hook -> ApiFetch: GET /api/logs?sortBy=createdAt&sortDirection=desc
+        ApiFetch -> ApiRoute: (same flow as initial load)
+        ApiRoute --> Hook: all logs (max 500)
+        Hook -> Hook: setRows(logs)\nsetLoading(false)
+        Table --> User: Full table restored
+
+        == Error Handling ==
+
+        alt Network / server error
+            ApiFetch --> Hook: throw Error
+            Hook -> Hook: setError(message)\nsetLoading(false)
+            Hook --> Page: error != null
+            Page --> User: <s-banner tone="critical" error={...} />
+        end
+
+        @enduml

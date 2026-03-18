@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { exchangeCodeForToken, generateSessionToken } from "@/lib/shopify-auth";
 import { prisma } from "@/lib/prisma";
+import { encryptAccessToken } from "@/lib/crypto/token-encryption";
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get("code");
     const state = searchParams.get("state");
+    const shop = searchParams.get("shop");
 
     if (!code || !state) {
         return NextResponse.json(
@@ -15,10 +17,11 @@ export async function GET(request: NextRequest) {
         );
     }
 
-
     // Check state matches the one we saved (CSRF protection)
     const cookieStore = await cookies();
     const storedState = cookieStore.get("shopify_auth_state")?.value;
+    const authType = cookieStore.get("shopify_auth_type")?.value ?? "online";
+    const isOnline = authType !== "offline";
 
     if (state !== storedState) {
         return NextResponse.json(
@@ -28,32 +31,72 @@ export async function GET(request: NextRequest) {
     }
 
     cookieStore.delete("shopify_auth_state");
+    cookieStore.delete("shopify_auth_type");
 
     try {
+        const appUrl = process.env.SHOPIFY_APP_URL ?? request.nextUrl.origin;
+        const shopDomain = shop ?? process.env.SHOPIFY_STORE_DOMAIN;
+        if (!shopDomain) {
+            return NextResponse.json(
+                { error: "Missing shop domain" },
+                { status: 400 }
+            );
+        }
         const tokenData = await exchangeCodeForToken(
-            process.env.SHOPIFY_STORE_DOMAIN!,
+            shopDomain,
             code
         );
+        console.log("Token exchange successful!");
+
+        // If offline, update store integration
+        if (!isOnline) {
+            await prisma.shopInstallation.upsert({
+                where: {
+                    shop: shopDomain,
+                },
+                update: {
+                    encryptedAccessToken: encryptAccessToken(tokenData.accessToken),
+                    scopes: tokenData.scope ?? null,
+                },
+                create: {
+                    shop: shopDomain,
+                    encryptedAccessToken: encryptAccessToken(tokenData.accessToken),
+                    scopes: tokenData.scope ?? null,
+                },
+            });
+
+            return NextResponse.redirect(`${appUrl}/m`);
+        }
+
+        if (!tokenData.associatedUser) {
+            return NextResponse.json(
+                { error: "Missing associated user for online OAuth" },
+                { status: 500 }
+            );
+        }
 
         const sessionToken = generateSessionToken();
+        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000 * 7); // 7 days
+        const shopifyUserId = String(tokenData.associatedUser.id);
+        const shopifyUserEmail = tokenData.associatedUser.email;
+        const shopifyUserName = `${tokenData.associatedUser.firstName} ${tokenData.associatedUser.lastName}`.trim();
 
-        const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
-        // upsert: update if exists, create if not
+        // Upsert: create if user session does not exist in the database or update if it does
         await prisma.userSession.upsert({
             where: {
-                shopifyUserId: String(tokenData.associatedUser.id),
+                shopifyUserId,
             },
             update: {
                 sessionToken,
                 accessToken: tokenData.accessToken,
-                expiresAt: expiresAt,
-                shopifyUserEmail: tokenData.associatedUser.email,
-                shopifyUserName: `${tokenData.associatedUser.firstName} ${tokenData.associatedUser.lastName}`,
+                expiresAt,
+                shopifyUserEmail,
+                shopifyUserName,
             },
             create: {
-                shopifyUserId: String(tokenData.associatedUser.id),
-                shopifyUserEmail: tokenData.associatedUser.email,
-                shopifyUserName: `${tokenData.associatedUser.firstName} ${tokenData.associatedUser.lastName}`,
+                shopifyUserId,
+                shopifyUserEmail,
+                shopifyUserName,
                 sessionToken,
                 accessToken: tokenData.accessToken,
                 expiresAt,
@@ -65,11 +108,11 @@ export async function GET(request: NextRequest) {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
-            maxAge: 24 * 60 * 60, // 24 hours
+            maxAge: 24 * 60 * 60 * 7, // 7 days
             path: "/",
         });
 
-        return NextResponse.redirect(`${process.env.APP_URL}/mobile`);
+        return NextResponse.redirect(`${appUrl}/m`);
     } catch (error) {
         console.error("OAuth callback error exchanging code for token:", error);
         return NextResponse.json(

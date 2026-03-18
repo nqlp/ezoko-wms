@@ -1,0 +1,144 @@
+@startuml ezoko-wms-database
+!theme plain
+skinparam linetype ortho
+skinparam roundcorner 5
+skinparam class {
+  BackgroundColor #FEFECE
+  BorderColor #A80036
+  ArrowColor #A80036
+}
+
+title Ezoko WMS - Database Schema
+
+' =====================
+' ENUM
+' =====================
+enum Activity {
+  Correction
+  Goods RECEIPT
+  Movement
+  Putaway
+  Picking
+  Goods Issue
+  Inv Counting
+}
+
+' =====================
+' PURCHASE ORDER GROUP
+' =====================
+entity "po_header" as po_header {
+  * **po_number** : BIGSERIAL <<PK>>
+  --
+  * vendor : TEXT
+  * status : TEXT = 'OPEN'
+  * creation_user : TEXT
+  * created_at : TIMESTAMPTZ
+  * import_duties : BOOLEAN = false
+  * Import_type : TEXT = 'NO_IMPORT'
+  expected_date : DATE
+  shipping_fees : DECIMAL(12,2)
+  shipping_fees_currency : CHAR(3) = 'CAD'
+  Notes : TEXT
+}
+
+entity "po_item" as po_item {
+  * **po_number** : BIGINT <<PK, FK>>
+  * **po_item** : INT <<PK>>
+  --
+  * product_title : TEXT
+  * variant_title : TEXT
+  sku : TEXT
+  * order_qty : INT = 1
+  received_qty : INT = 0
+  * status : TEXT = 'OPEN'
+  unit_cost : DECIMAL(12,2)
+  last_receiving_Date : TIMESTAMPTZ
+  * last_modification : TIMESTAMPTZ
+  * last_modification_user : TEXT
+}
+
+entity "po_shop_scope" as po_shop_scope {
+  * **po_number** : BIGINT <<PK, FK>>
+  --
+  * shop : TEXT
+}
+
+' =====================
+' STOCK & LOGGING
+' =====================
+entity "stock_movement_logs" as stock_movement_logs {
+  * **id** : UUID <<PK>>
+  --
+  * created_at : TIMESTAMP = now()
+  user : TEXT
+  * activity : Activity <<ENUM>>
+  barcode : TEXT
+  variant_title : TEXT
+  src_location : TEXT
+  src_qty : INT
+  destination_location : TEXT
+  destination_qty : INT
+  reference_doc : TEXT
+}
+
+' =====================
+' AUTHENTICATION & SESSIONS
+' =====================
+entity "user_sessions" as user_sessions {
+  * **id** : UUID <<PK>>
+  --
+  * shopify_user_id : TEXT <<UNIQUE>>
+  * shopify_user_email : TEXT
+  * shopify_user_name : TEXT
+  * session_token : TEXT <<UNIQUE>>
+  * access_token : TEXT
+  * expires_at : TIMESTAMP
+  * created_at : TIMESTAMP = now()
+}
+
+' =====================
+' SHOPIFY INTEGRATION
+' =====================
+entity "shop_installation" as shop_installation {
+  * **shop** : TEXT <<PK>>
+  --
+  * encrypted_access_token : TEXT
+  scopes : TEXT
+  * created_at : TIMESTAMPTZ = now()
+  * updated_at : TIMESTAMPTZ
+}
+
+entity "shop_installation" as shop_installation {
+  * **store_domain** : TEXT <<PK>>
+  --
+  * access_token : TEXT
+}
+
+entity "shopify_vendor_cache" as shopify_vendor_cache {
+  * **shop** : TEXT <<PK>>
+  --
+  * vendors : JSONB
+  * refreshed_at : TIMESTAMPTZ
+}
+
+' =====================
+' USER PREFERENCES
+' =====================
+entity "user_prefs" as user_prefs {
+  * **shop** : TEXT <<PK>>
+  * **user_id** : TEXT <<PK>>
+  --
+  filters : JSONB
+  sorting : JSONB
+  * updated_at : TIMESTAMPTZ = now()
+}
+
+' =====================
+' RELATIONS
+' =====================
+po_header ||--|{ po_item : "1:N\nON DELETE RESTRICT"
+po_header ||--|| po_shop_scope : "1:1\nON DELETE CASCADE"
+
+stock_movement_logs }o..|| Activity : "uses"
+
+@enduml

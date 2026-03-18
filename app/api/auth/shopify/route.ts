@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getAuthorizationUrl, generateState } from "@/lib/shopify-auth";
 import { cookies } from "next/headers";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     const shop = process.env.SHOPIFY_STORE_DOMAIN;
 
     if (!shop) {
@@ -15,7 +15,6 @@ export async function GET(request: NextRequest) {
     // Generate a state parameter for CSRF protection
     const state = generateState();
 
-    // cookie state is to check if the request is from the same user
     const cookieStore = await cookies();
     cookieStore.set("shopify_auth_state", state, {
         httpOnly: true,
@@ -25,7 +24,16 @@ export async function GET(request: NextRequest) {
         path: "/",
     });
 
-    const authUrl = getAuthorizationUrl(shop, state);
+    // Online: user_sessions 
+    cookieStore.set("shopify_auth_type", "online", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 10, // 10 minutes
+        path: "/",
+    });
+
+    const authUrl = getAuthorizationUrl(shop, state, { online: true });
 
     return NextResponse.redirect(authUrl);
 }

@@ -14,10 +14,10 @@ import crypto from "crypto";
 
 // Initialize the Shopify API client
 export const shopify = shopifyApi({
-    apiKey: process.env.SHOPIFY_CLIENT_ID_BARCODE_SCANNER!,
-    apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET_BARCODE_SCANNER!,
+    apiKey: process.env.SHOPIFY_CLIENT_ID!,
+    apiSecretKey: process.env.SHOPIFY_CLIENT_SECRET!,
     scopes: (process.env.SHOPIFY_OAUTH_SCOPES || "read_inventory,write_inventory").split(","),
-    hostName: process.env.APP_URL ? new URL(process.env.APP_URL).hostname : "localhost",
+    hostName: process.env.SHOPIFY_APP_URL ? new URL(process.env.SHOPIFY_APP_URL).hostname : "localhost",
     apiVersion: ApiVersion.January26,
     isEmbeddedApp: false,
 });
@@ -40,17 +40,31 @@ export function generateState(): string {
 /**
  * Get the OAuth authorization URL using the Shopify library.
  */
-export function getAuthorizationUrl(shop: string, state: string): string {
-    const redirectUri = `${process.env.APP_URL}/api/auth/shopify/callback`;
+export function getAuthorizationUrl(
+    shop: string,
+    state: string,
+    options?: { online?: boolean; }
+): string {
+
+    // Exemple: https:///mywebsite.com -> https://mywebsite.com
+    // https://mywebsite.com/ -> https://mywebsite.com
+    const appUrl = process.env.SHOPIFY_APP_URL?.replace(/\/+$/, "");
+    if (!appUrl) {
+        throw new Error("SHOPIFY_APP_URL is required to build Shopify OAuth redirect URI");
+    }
+
+    const redirectUri = `${appUrl}/api/auth/shopify/callback`;
     const scopes = process.env.SHOPIFY_OAUTH_SCOPES || "read_inventory,write_inventory";
+    const isOnline = options?.online !== false;
 
     // Build authorization URL for online (per-user) access tokens
-    return `https://${shop}/admin/oauth/authorize?` +
-        `client_id=${process.env.SHOPIFY_CLIENT_ID_BARCODE_SCANNER}` +
+    const baseUrl = `https://${shop}/admin/oauth/authorize?` +
+        `client_id=${process.env.SHOPIFY_CLIENT_ID}` +
         `&scope=${scopes}` +
         `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&state=${state}` +
-        `&grant_options[]=per-user`;
+        `&state=${state}`;
+
+    return isOnline ? `${baseUrl}&grant_options[]=per-user` : baseUrl;
 }
 
 /**
@@ -64,7 +78,7 @@ export async function exchangeCodeForToken(
     accessToken: string;
     scope: string;
     expiresIn: number;
-    associatedUser: {
+    associatedUser?: {
         id: number;
         firstName: string;
         lastName: string;
@@ -75,8 +89,8 @@ export async function exchangeCodeForToken(
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-            client_id: process.env.SHOPIFY_CLIENT_ID_BARCODE_SCANNER,
-            client_secret: process.env.SHOPIFY_CLIENT_SECRET_BARCODE_SCANNER,
+            client_id: process.env.SHOPIFY_CLIENT_ID!,
+            client_secret: process.env.SHOPIFY_CLIENT_SECRET!,
             code,
         }),
     });
@@ -93,11 +107,13 @@ export async function exchangeCodeForToken(
         accessToken: data.access_token,
         scope: data.scope,
         expiresIn: data.expires_in,
-        associatedUser: {
-            id: data.associated_user.id,
-            firstName: data.associated_user.first_name,
-            lastName: data.associated_user.last_name,
-            email: data.associated_user.email,
-        },
+        associatedUser: data.associated_user
+            ? {
+                id: data.associated_user.id,
+                firstName: data.associated_user.first_name,
+                lastName: data.associated_user.last_name,
+                email: data.associated_user.email,
+            }
+            : undefined,
     };
 }

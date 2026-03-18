@@ -1,0 +1,91 @@
+@startuml UploadExcel.puml
+title Purchase Order - Upload File Flow (CSV/XLSX)
+
+actor User
+participant "ItemGrids.tsx" as Grid
+participant "input[type=file]\n(.csv,.xlsx,.xls)" as FileInput
+participant "parseCsvHeaders()" as CsvParser
+participant "PapaParse" as Papa
+participant "parseExcelHeaders()" as ExcelParser
+participant "XLSX" as XlsxLib
+participant "ExcelImportDialog.tsx" as Dialog
+participant "applyColumnMapping()" as Mapper
+participant "POST /api/shopify/products/\nvalidate-excel-import" as ApiRoute
+participant "requireShopifySession()" as Auth
+participant "validateSku()" as SkuValidator
+participant "validateProductByHandle()" as HandleValidator
+participant "usePurchaseOrderForm reducer\n(IMPORT_LINES)" as Reducer
+
+User -> Grid: Click "Import File"
+Grid -> FileInput: fileInputRef.current.click()
+FileInput --> User: Open file picker
+
+User -> FileInput: Select file
+FileInput -> Grid: onChange(file)
+
+alt file extension is .csv
+    Grid -> Grid: text = await file.text()
+    Grid -> CsvParser: parseCsvHeaders(text)
+    CsvParser -> Papa: parse(header=true, skipEmptyLines=true)
+    Papa --> CsvParser: fields + data
+    CsvParser --> Grid: {headers, firstDataRow, allRows}
+else any non-.csv file accepted by input: .xlsx/.xls
+    Grid -> ExcelParser: parseExcelHeaders(file)
+    ExcelParser -> XlsxLib: read(arrayBuffer)\nsheet_to_json(...)
+    XlsxLib --> ExcelParser: rows
+    ExcelParser --> Grid: {headers, firstDataRow, allRows}
+end
+
+Grid -> Dialog: setImportData(parsed)
+Dialog --> User: Phase "mapping" (map each column)
+
+User -> Dialog: Click "Confirm"
+Dialog -> Dialog: phase = "validating"
+Dialog -> Mapper: applyColumnMapping(allRows, mapping)
+Mapper --> Dialog: mappedRows
+Dialog -> Dialog: add rowNumber (index + 2)
+Dialog -> ApiRoute: POST {rows, skuMapped,\nproductHandleMapped, qtyMapped, unitCostMapped}
+
+ApiRoute -> Auth: requireShopifySession(request)
+Auth --> ApiRoute: session
+
+ApiRoute -> ApiRoute: Extract unique SKUs\nand unique product handles\n(Set deduplication)
+
+par
+    ApiRoute -> SkuValidator: validateSku() × N unique SKUs\n(Promise.all — parallel)
+    SkuValidator --> ApiRoute: SkuValidationMatch[][]
+else
+    ApiRoute -> HandleValidator: validateProductByHandle() × M unique handles\n(Promise.all — parallel)
+    HandleValidator --> ApiRoute: title | null
+    end par
+
+    ApiRoute -> ApiRoute: Build skuValidationMap\nand handleValidationMap\n(Map<sku, matches>)
+
+    loop for each mapped row (local lookups only — no API calls)
+        ApiRoute -> ApiRoute: skuValidationMap.get(sku)\nor handleValidationMap.get(handle)\nvalidate qty and unit_cost\ncollect issues / validRows
+    end
+
+    ApiRoute --> Dialog: {issues, hasErrors, validRows?}
+    Dialog --> User: Phase "report"
+    Dialog --> User: Back button visible
+
+    alt hasErrors = true
+        Dialog --> User: Show issues table\nSave disabled
+    else hasErrors = false
+        User -> Dialog: Click "Save"
+        Dialog -> Dialog: validRows -> FormLine[]
+        Dialog -> Grid: onImport(lines)
+        Grid -> Reducer: dispatch IMPORT_LINES(lines)
+        note right of Reducer
+            If only placeholder line exists:
+            replace it.
+            Otherwise append imported lines.
+            Reset suggestions/popovers.
+        end note
+        Grid -> Grid: setImportData(null)
+    end
+
+    User -> Dialog: Click "Back" (optional)
+    Dialog -> Dialog: phase = "mapping"
+
+    @enduml
