@@ -6,6 +6,8 @@ import { apiFetch } from "@/lib/client/api";
 import { useEmbeddedBootstrap } from "@/lib/client/hooks";
 import { PurchaseOrderTableRow } from "./PurchaseOrderTable";
 import { EMPTY_FILTERS, FiltersState, SortBy, SortDirection, toQueryParams } from "./purchase-order-list-types";
+import { canCheckIn } from '@/lib/po/params';
+import type { PoHeaderStatus } from "@/lib/constants";
 
 export default function usePurchaseOrderList() {
     const bootstrap = useEmbeddedBootstrap();
@@ -172,7 +174,7 @@ export default function usePurchaseOrderList() {
             return;
         }
 
-        if (status !== "OPEN") {
+        if (!canCheckIn(status as PoHeaderStatus)) {
             setInlineErrors((prev) => ({
                 ...prev,
                 [poNumber]: "Check-in is only allowed for OPEN purchase orders"
