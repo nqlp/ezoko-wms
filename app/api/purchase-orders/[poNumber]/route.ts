@@ -1,18 +1,11 @@
 import { NextResponse } from 'next/server';
 
 import { requireShopifySession } from '@/lib/auth/require-auth';
-import { ApiError, handleRouteError } from '@/lib/http';
+import { handleRouteError } from '@/lib/http';
+import { parsePoNumber } from '@/lib/po/params';
 import { getPurchaseOrder, updatePurchaseOrder } from '@/lib/po/service';
 import { parseOrThrow } from '@/lib/validation/utils';
 import { updatePurchaseOrderSchema } from '@/lib/validation/po';
-
-function parsePoNumber(value: string): bigint {
-  try {
-    return BigInt(value);
-  } catch {
-    throw new ApiError(400, 'Invalid po_number');
-  }
-}
 
 export async function GET(
   request: Request,

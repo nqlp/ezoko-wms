@@ -2,7 +2,7 @@
 
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { UpdateBinQtyByID } from "./updateBinQty";
-import { logMoveActivity } from "@/lib/activityLog";
+import { writeStockMovementLog } from "@/lib/activityLog";
 import { requireSession } from "@/lib/auth/session";
 
 interface MoveStockInput {
@@ -61,7 +61,7 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
     }
     try {
         // Log to database only if both updates succeeded
-        await logMoveActivity({
+        await writeStockMovementLog({
             activity,
             barcode: input.barcode ?? null,
             variantTitle: input.variantTitle ?? null,

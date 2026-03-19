@@ -11,6 +11,8 @@ import type {
 } from '@/lib/validation/po';
 import { parseDate, applyFilters, SORT_COLUMN_MAP, type SortBy } from '@/lib/po/filters';
 import { parseNullableText, serializePurchaseOrder, toItemCreateInput } from './transformers';
+import { canCheckIn, isReadOnly } from '@/lib/po/params';
+import { PoHeaderStatus } from '../constants';
 
 export async function createPurchaseOrder(session: AuthenticatedSession, input: CreatePurchaseOrderInput) {
   const now = new Date();
@@ -105,7 +107,7 @@ export async function updatePurchaseOrder(
       throw new ApiError(404, "Purchase order not found");
     }
 
-    if (existing.status === "ARCHIVED") {
+    if (isReadOnly(existing.status as PoHeaderStatus)) {
       throw new ApiError(409, "Archived purchase orders are read-only");
     }
 
@@ -179,7 +181,7 @@ export async function checkInPurchaseOrder(session: AuthenticatedSession, poNumb
       throw new ApiError(404, "Purchase order not found");
     }
 
-    if (header.status !== "OPEN") {
+    if (!canCheckIn(header.status as PoHeaderStatus)) {
       throw new ApiError(409, "Check-in is only allowed for OPEN purchase orders");
     }
 

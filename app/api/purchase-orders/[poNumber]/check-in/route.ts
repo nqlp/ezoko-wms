@@ -1,16 +1,9 @@
 import { NextResponse } from 'next/server';
 
 import { requireShopifySession } from '@/lib/auth/require-auth';
-import { ApiError, handleRouteError } from '@/lib/http';
+import { handleRouteError } from '@/lib/http';
+import { parsePoNumber } from '@/lib/po/params';
 import { checkInPurchaseOrder } from '@/lib/po/service';
-
-function parsePoNumber(value: string): bigint {
-  try {
-    return BigInt(value);
-  } catch {
-    throw new ApiError(400, 'Invalid po_number');
-  }
-}
 
 export async function POST(
   request: Request,
