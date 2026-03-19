@@ -4,16 +4,16 @@ import { ProductsApi } from "@/lib/shopify/productsApi";
 import { ShopifyClient } from "@/lib/shopify/client";
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { UpdateStockResult } from "@/lib/types/ApiResponse";
-
+import { updateMetaobjectQty } from "@/lib/shopify/operation";
 export async function UpdateBinQtyByID(
     id: string,
     newQty: number,
-    accessToken?: string): Promise<ApiResponse<UpdateStockResult>> {
+    accessToken?: string
+    ):
+    Promise<ApiResponse<UpdateStockResult>> {
     try {
-        const client = new ShopifyClient(accessToken);
-        const productsApi = new ProductsApi(client);
 
-        const result = await productsApi.updateMetaobjectQty(id, newQty.toString());
+        const result = await updateMetaobjectQty(id, newQty.toString(), accessToken);
         const updatePayload = result.metaobjectUpdate;
         const metaobject = updatePayload.metaobject;
         const error = updatePayload.userErrors[0]?.message;
