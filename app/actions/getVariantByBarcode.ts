@@ -1,11 +1,9 @@
 "use server";
 
-import { ShopifyClient } from "@/lib/shopify/client";
-import { ProductsApi } from "@/lib/shopify/productsApi";
+import { findVariantsByBarcode } from "@/lib/shopify/operations";
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { ProductVariant } from "@/lib/types/ProductVariant";
 import { requireSession } from "@/lib/auth/session";
-import { validateBarcodeLookup } from "@/lib/barcode/validation";
 
 export async function getVariantByBarcode(
   barcode: string
@@ -13,13 +11,29 @@ export async function getVariantByBarcode(
   try {
     const trimmedBarcode = barcode.trim();
     await requireSession();
-    const client = new ShopifyClient();
-    const productApi = new ProductsApi(client);
 
-    const productVariants = await productApi.findVariantsByBarcode(trimmedBarcode);
+    const productVariants = await findVariantsByBarcode(trimmedBarcode);
 
-    return validateBarcodeLookup(productVariants, trimmedBarcode);
+    if (productVariants.length > 1) {
+      return {
+        success: false,
+        message: `Error: Multiple variants found with the same barcode (${trimmedBarcode}). Please make the changes in Shopify.`,
+        errorCode: "MULTIPLE_VARIANTS",
+      };
+    }
 
+    if (productVariants.length === 0) {
+      return {
+        success: false,
+        message: `Barcode ${trimmedBarcode} does NOT exist`,
+        errorCode: "NOT_FOUND",
+      };
+    }
+
+    return {
+      success: true,
+      data: productVariants[0],
+    };
   } catch (error) {
     console.error("Error fetching product by barcode:", error);
 

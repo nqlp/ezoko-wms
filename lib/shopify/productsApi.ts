@@ -7,7 +7,7 @@ import { MetaobjectUpdatePayload } from "../types/ShopifyPayload";
 import { METAOBJECT_UPDATE_MUTATION } from "@/lib/shopify/mutations/updateMetaobjectQty";
 import { InventorySetQuantitiesPayload } from "../types/InventorySetQuantities";
 import { SYNC_SHOPIFY_INVENTORY } from "./mutations/updateShopifyInventory";
-import { toProductVariant } from "./operation";
+import { toProductVariant } from "./operations";
 
 export class ProductsApi {
   private client: ShopifyClient;

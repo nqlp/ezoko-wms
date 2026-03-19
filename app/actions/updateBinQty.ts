@@ -4,7 +4,7 @@ import { ProductsApi } from "@/lib/shopify/productsApi";
 import { ShopifyClient } from "@/lib/shopify/client";
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { UpdateStockResult } from "@/lib/types/ApiResponse";
-import { updateMetaobjectQty } from "@/lib/shopify/operation";
+import { updateMetaobjectQty } from "@/lib/shopify/operations";
 export async function UpdateBinQtyByID(
     id: string,
     newQty: number,
