@@ -26,8 +26,5 @@ export const moneySchema = z
         z.number()
             .refine(Number.isFinite, "Must be a valid number")
             .min(0, "Must be zero or positive")
-            .refine(
-                (value) => Number(value.toFixed(2)) === value,
-                "Must have at most 2 decimal places"
-            )
+            .transform((value) => Math.round((value + Number.EPSILON) * 100) / 100)
     );
