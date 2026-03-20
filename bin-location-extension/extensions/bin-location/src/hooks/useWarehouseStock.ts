@@ -2,6 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { VARIANT_WAREHOUSE_STOCK_QUERY } from '../graphql/queries';
 import { MetaobjectNode, StockItem, WarehouseStockResponse } from '../types/warehouseStock';
 import { getFieldValue, ShopifyQueryFct } from '../utils/helpers';
+import { resolveBinName } from '@shared/utils/metaobject';
 
 export interface UseWarehouseStockResult {
   items: StockItem[];
@@ -57,7 +58,7 @@ export function useWarehouseStock(
             const binLocationRef = fields.find((field) => field.key === "bin_location")?.reference;
             const refFields = binLocationRef?.fields || [];
             const binName =
-              getFieldValue(refFields, "bin_location") ||
+              resolveBinName(refFields, node.handle) ||
               binLocationRef?.handle ||
               node.handle;
             const qty = getFieldValue(fields, "qty") || "0";

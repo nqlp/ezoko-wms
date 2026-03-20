@@ -5,10 +5,6 @@ import { ProductVariant } from "@/lib/types/ProductVariant";
 import { StockLocation } from "@/lib/types/StockLocation";
 import { FIND_VARIANTS_BY_BARCODE_QUERY } from "@/lib/shopify/queries/variantQuery";
 import { VariantWithStock } from "@/lib/types/VariantWithStock";
-import {
-    MetaobjectField,
-    MetaobjectFieldWithReference,
-} from "@/lib/types/MetaobjectField";
 import { MetaobjectUpdatePayload } from "@/lib/types/ShopifyPayload";
 import { METAOBJECT_UPDATE_MUTATION } from "@/lib/shopify/mutations/updateMetaobjectQty";
 import { InventorySetQuantitiesPayload } from "@/lib/types/InventorySetQuantities";
@@ -18,26 +14,7 @@ import { SYNC_SHOPIFY_INVENTORY } from "@/lib/shopify/mutations/updateShopifyInv
 // Variant lookup
 // ============================================================================
 
-function getBinName(
-    fields: MetaobjectFieldWithReference[],
-    fallbackHandle: string
-): string {
-    const binField = fields.find((field) => field.key === "bin_location");
-    const referenceFields = binField?.reference?.fields ?? [];
-    const referenceValue =
-        referenceFields.find((field) => field.key === "bin_location")?.value ??
-        referenceFields.find((field) => field.key === "bin")?.value;
-
-    if (referenceValue?.trim()) {
-        return referenceValue.trim();
-    }
-
-    if (binField?.reference?.handle) {
-        return binField.reference.handle;
-    }
-
-    return fallbackHandle || "Unknown";
-}
+import { resolveBinName } from "@/shared/utils/metaobject";
 
 function mapVariantWithStock(variant: VariantWithStock): ProductVariant {
     const stockMetafield = variant.metafields?.nodes.find(
@@ -49,7 +26,7 @@ function mapVariantWithStock(variant: VariantWithStock): ProductVariant {
 
     for (const edge of stockNodes) {
         const stockEntry = edge.fields;
-        const binName = getBinName(stockEntry, edge.handle);
+        const binName = resolveBinName(stockEntry, edge.handle);
         const qtyField = stockEntry.find((field) => field.key === "qty");
         const parsedQty = Number.parseFloat(qtyField?.value ?? "0");
         const qty = Number.isFinite(parsedQty) ? parsedQty : 0;
@@ -142,7 +119,7 @@ export function parseBinStock(variant: VariantWithStock): StockLocation[] {
 
     for (const edge of stockNodes) {
         const stockEntry = edge.fields;
-        const binName = getBinName(stockEntry, edge.handle);
+        const binName = resolveBinName(stockEntry, edge.handle);
         const qtyField = stockEntry.find((field) => field.key === "qty");
         const parsedQty = Number.parseFloat(qtyField?.value ?? "0");
         const qty = Number.isFinite(parsedQty) ? parsedQty : 0;
