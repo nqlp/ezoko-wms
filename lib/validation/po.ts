@@ -1,16 +1,10 @@
 import { z } from 'zod';
-
+import { orderQtySchema, moneySchema } from "@/lib/validation/field-schemas";
 import { PO_CURRENCIES, DEFAULT_CURRENCY, IMPORT_TYPES, PO_HEADER_STATUS } from '@/lib/constants';
 
 const currencySchema = z.enum(PO_CURRENCIES);
 const importTypeSchema = z.enum(IMPORT_TYPES);
 const poHeaderStatusSchema = z.enum(PO_HEADER_STATUS);
-
-const nonNegativeMoneySchema = z
-  .number()
-  .refine(Number.isFinite, "Number must be finite")
-  .min(0)
-  .refine((value) => Number(value.toFixed(2)) === value, "Value must have at most 2 decimal places");
 
 const optionalDateSchema = z
   .string()
@@ -30,8 +24,8 @@ const lineSchema = z.object({
   sku: z.string().trim().max(255).optional().nullable(),
   productTitle: z.string().trim().min(1),
   variantTitle: z.string().trim().min(1),
-  orderQty: z.number().int().min(1),
-  unitCost: nonNegativeMoneySchema.optional().nullable(),
+  orderQty: orderQtySchema,
+  unitCost: moneySchema.optional().nullable(),
   unitCostCurrency: currencySchema.default(DEFAULT_CURRENCY),
   hsCode: z.string().trim().max(255).optional().nullable(),
   coo: z
@@ -47,7 +41,7 @@ const headerSchema = z.object({
   importDuties: z.boolean(),
   importType: importTypeSchema.default("NO_IMPORT"),
   expectedDate: optionalDateSchema,
-  shippingFees: nonNegativeMoneySchema.optional().nullable(),
+  shippingFees: moneySchema.optional().nullable(),
   purchaseOrderCurrency: currencySchema.optional().nullable(),
   notes: z.string().optional().nullable()
 });
