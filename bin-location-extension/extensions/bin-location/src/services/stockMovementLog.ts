@@ -1,16 +1,5 @@
-import { Activity, CorrectionLogInput } from "@shared/types/index";
-
-interface CorrectionStockMovementPayload {
-  activity: Activity.CORRECTION;
-  barcode?: string | null;
-  variantTitle?: string | null;
-  srcLocation?: string | null;
-  srcQty?: number | null;
-  destinationLocation?: string | null;
-  destinationQty?: number | null;
-  referenceDoc?: string | null;
-  user?: string | null;
-}
+import { Activity, CorrectionLogInput, StockMovementLogInput} from "@shared/types/index";
+import { APP_URL } from "src/config";
 
 // ============================================================================
 // Helpers
@@ -49,7 +38,7 @@ export function extractUserIdFromToken(token: string): string | null {
 // ============================================================================
 
 function getEndpoint(): string {
-  return "https://ezoko-frontend-test.up.railway.app/api/stock-movements-logs";
+  return `${APP_URL}/api/stock-movement-logs`;
 }
 
 /**
@@ -64,7 +53,7 @@ export async function logCorrectionActivity(input: CorrectionLogInput): Promise<
   // Resolve user ID from input or token
   const userId = input.user ?? (input.token ? extractUserIdFromToken(input.token) : null);
 
-  const payload: CorrectionStockMovementPayload = {
+  const payload: StockMovementLogInput = {
     activity: Activity.CORRECTION,
     barcode: input.barcode ?? null,
     variantTitle: input.variantTitle ?? null,
