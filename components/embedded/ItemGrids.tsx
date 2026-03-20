@@ -1,10 +1,9 @@
 "use client";
 
-import { Dispatch, SetStateAction, useState, useRef } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import type { FormLine, ProductOption, VariantOption } from '@/components/embedded/po-form.types';
 import { eventValue } from '@/components/embedded/po-form.utils';
-import { ParseCsvData, parseCsvHeaders } from '@/lib/po/item-import/parseCsvPurchaseOrderItems';
-import { parseExcelHeaders } from '@/lib/po/item-import/parseExcelFile';
+import { useFileImport } from './hooks/useFileImport';
 import { ExcelImportDialog } from './ExcelImportDialog';
 import './ItemGrids.css';
 
@@ -58,9 +57,7 @@ export function ItemGrids({ readOnly, data, popovers, actions }: ItemGridsProps)
     searchProducts, selectProduct, selectVariant, searchVariants,
   } = actions;
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [importData, setImportData] = useState<ParseCsvData | null>(null);
-
+  const { fileInputRef, importData, openFilePicker, handleFileChange, clearImportData } = useFileImport();
   return (
     <>
       <s-section>
@@ -72,7 +69,7 @@ export function ItemGrids({ readOnly, data, popovers, actions }: ItemGridsProps)
                 <s-button type="button" onClick={addLine} variant="primary">
                   Add line
                 </s-button>
-                <s-button type="button" variant="secondary" onClick={() => fileInputRef.current?.click()}>
+                <s-button type="button" variant="secondary" onClick={openFilePicker}>
                   Import File
                 </s-button>
 
@@ -81,20 +78,7 @@ export function ItemGrids({ readOnly, data, popovers, actions }: ItemGridsProps)
                   type="file"
                   accept=".csv, .xlsx, .xls"
                   hidden
-                  onChange={async (e) => {
-                    const file = e.currentTarget.files?.[0];
-                    if (!file) return;
-
-                    let parsed;
-                    if (file.name.endsWith(".csv")) {
-                      const text = await file.text();
-                      parsed = parseCsvHeaders(text);
-                    } else {
-                      parsed = await parseExcelHeaders(file);
-                    }
-                    setImportData(parsed);
-                  }}
-
+                  onChange={handleFileChange}
                 />
               </s-stack>
             ) : null}
@@ -330,7 +314,7 @@ export function ItemGrids({ readOnly, data, popovers, actions }: ItemGridsProps)
           allRows={importData.allRows}
           onImport={lines => {
             actions.importLines(lines);
-            setImportData(null);
+            clearImportData();
           }}
         />
       )}
