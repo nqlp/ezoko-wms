@@ -21,24 +21,25 @@ interface MoveStockInput {
 export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiResponse<void>> {
     const {
         sourceBinId,
+        sourceBinName,
         sourceBinQtyBefore,
         destinationBinId,
+        destinationBinName,
         destinationBinQtyBefore,
         moveQty,
         activity = "MOVEMENT",
     } = input;
 
     const session = await requireSession();
-    const user = session.shopifyUserName;
 
     if (!session) {
         return {
             success: false,
-            message: "User not authenticated"
+            message: "User not authenticated",
         };
     }
+    const user = session.shopifyUserName;
 
-    // Calculate quantities after move
     const sourceQtyAfter = sourceBinQtyBefore - moveQty;
     const destQtyAfter = destinationBinQtyBefore + moveQty;
 
@@ -47,39 +48,66 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
     if (!sourceResult.success) {
         return {
             success: false,
-            message: `Failed to update source bin: ${sourceResult.message}`
+            message: `Failed to update source bin: ${sourceResult.message}`,
         };
     }
 
     // Update destination bin (increase)
     const destResult = await UpdateBinQtyByID(destinationBinId, destQtyAfter);
     if (!destResult.success) {
+        // Rollback: restore source bin to its original quantity
+        const rollback = await UpdateBinQtyByID(sourceBinId, sourceBinQtyBefore);
+
+        if (!rollback.success) {
+            // Worst case: rollback also failed — log the inconsistency
+            console.error(
+                `[CRITICAL] Stock inconsistency: source bin ${sourceBinName} (${sourceBinId}) ` +
+                `was decremented to ${sourceQtyAfter} but destination ${destinationBinName} (${destinationBinId}) ` +
+                `update failed, AND rollback failed. Manual correction needed. ` +
+                `Original source qty: ${sourceBinQtyBefore}`
+            );
+            return {
+                success: false,
+                message:
+                    `Failed to update destination bin AND failed to rollback source bin. ` +
+                    `Source ${sourceBinName} may show ${sourceQtyAfter} instead of ${sourceBinQtyBefore}. ` +
+                    `Please verify and correct manually.`,
+            };
+        }
+
         return {
             success: false,
-            message: `Failed to update destination bin: ${destResult.message}`
+            message: `Failed to update destination bin: ${destResult.message}. Source bin was rolled back.`,
         };
     }
+    
     try {
         // Log to database only if both updates succeeded
         await writeStockMovementLog({
             activity,
             barcode: input.barcode ?? null,
             variantTitle: input.variantTitle ?? null,
-            srcLocation: input.sourceBinName,
-            srcQty: input.sourceBinQtyBefore,
-            destinationLocation: input.destinationBinName,
-            destinationQty: input.destinationBinQtyBefore,
-            user: user,
+            srcLocation: sourceBinName,
+            srcQty: sourceBinQtyBefore,
+            destinationLocation: destinationBinName,
+            destinationQty: destinationBinQtyBefore,
+            user,
         });
-    }
-    catch (error) {
+    } catch (error) {
+        console.error(
+            `[WARNING] Stock moved from ${sourceBinName} to ${destinationBinName} (qty: ${moveQty}) ` +
+            `but logging failed:`,
+            error
+        );
+
         return {
-            success: false,
-            message: `Failed to log stock movement: ${error instanceof Error ? error.message : "Unknown error"}`
+            success: true,
+            data: undefined,
         };
     }
+
     return {
         success: true,
-        data: undefined
+        data: undefined,
     };
 }

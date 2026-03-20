@@ -12,7 +12,7 @@ import {
     isBinBarcode,
     isProductBarcode,
     trimmedBarcode,
-} from "./scannerRules";
+} from "@/lib/barcode/rules";
 
 function resolveMovementActivity(mode: ScannerMode): MovementActivity {
     return mode === "putaway" ? "PUTAWAY" : "MOVEMENT";
