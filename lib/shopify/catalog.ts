@@ -1,6 +1,15 @@
 import { prisma } from '@/lib/prisma';
 import type { AuthenticatedSession } from '@/lib/auth/session-token';
 import { runShopifyGraphql } from '@/lib/shopify/graphql';
+import {
+  VERIFY_PRODUCT_TITLE_QUERY,
+  FIND_PRODUCT_BY_HANDLE_QUERY,
+  VENDORS_QUERY,
+  SEARCH_PRODUCTS_QUERY,
+  SEARCH_VARIANTS_BY_TITLE_QUERY,
+  PRODUCT_VARIANTS_QUERY,
+  VALIDATE_SKU_QUERY,
+} from '@/lib/shopify/queries/catalogQueries';
 
 const VENDOR_CACHE_TTL_MS = 30 * 60 * 1000;
 
@@ -113,15 +122,7 @@ export async function verifyProductTitlesExist(
   for (const title of uniqueTitles) {
     const data = await runShopifyGraphql<ProductSearchResponse>(
       session,
-      `#graphql
-      query VerifyProductTitle($query: String!) {
-        products(first: 20, query: $query) {
-          nodes {
-            title
-          }
-        }
-      }
-      `,
+      VERIFY_PRODUCT_TITLE_QUERY,
       { query: `title:"${title.replace(/"/g, '\\"')}"` }
     );
 
@@ -141,14 +142,7 @@ export async function validateProductByHandle(
 ) {
   const data = await runShopifyGraphql<ProductByHandleResponse>(
     session,
-    `#graphql
-    query FindProductByHandle($handle: String!) {
-      productByHandle(handle: $handle) {
-        title
-        handle
-      }
-    }
-    `,
+    FIND_PRODUCT_BY_HANDLE_QUERY,
     { handle }
   );
 
@@ -177,16 +171,7 @@ async function fetchAllVendorsFromShopify(session: AuthenticatedSession): Promis
   for (; ;) {
     const data: ProductVendorsResponse = await runShopifyGraphql<ProductVendorsResponse>(
       session,
-      `#graphql
-      query Vendors($first: Int!, $after: String) {
-        productVendors(first: $first, after: $after) {
-          nodes
-          pageInfo {
-            hasNextPage
-            endCursor
-          }
-        }
-      }`,
+      VENDORS_QUERY,
       { first: 250, after }
     );
 
@@ -246,28 +231,7 @@ export async function searchProducts(session: AuthenticatedSession, rawQuery: st
 
   const data = await runShopifyGraphql<ProductSearchResponse>(
     session,
-    `#graphql
-    query SearchProducts($query: String!) {
-      products(first: 20, query: $query) {
-        nodes {
-          id
-          title
-          vendor
-          variants(first: 50) {
-            nodes {
-              id
-              title
-              sku
-              selectedOptions {
-                name
-                value
-              }
-            }
-          }
-        }
-      }
-    }
-    `,
+    SEARCH_PRODUCTS_QUERY,
     { query }
   );
 
@@ -297,25 +261,7 @@ export async function searchVariantsByTitle(session: AuthenticatedSession, rawQu
 
   const data = await runShopifyGraphql<VariantSearchResponse>(
     session,
-    `#graphql
-    query SearchVariantsByTitle($query: String!) {
-      productVariants(first: 20, query: $query) {
-        nodes {
-          id
-          title
-          sku
-          product { 
-            id
-            title
-          }
-          selectedOptions { 
-            name 
-            value 
-          }
-        }
-      }
-    }
-    `,
+    SEARCH_VARIANTS_BY_TITLE_QUERY,
     { query: `title:*${query}*` }
   );
 
@@ -332,25 +278,7 @@ export async function searchVariantsByTitle(session: AuthenticatedSession, rawQu
 export async function getProductVariants(session: AuthenticatedSession, productId: string): Promise<ShopifyVariantLite[]> {
   const data = await runShopifyGraphql<ProductVariantsResponse>(
     session,
-    `#graphql
-    query ProductVariants($id: ID!) {
-      product(id: $id) {
-        id
-        title
-        variants(first: 100) {
-          nodes {
-            id
-            title
-            sku
-            selectedOptions {
-              name
-              value
-            }
-          }
-        }
-      }
-    }
-    `,
+    PRODUCT_VARIANTS_QUERY,
     { id: productId }
   );
 
@@ -374,24 +302,7 @@ export async function validateSku(session: AuthenticatedSession, rawSku: string)
 
   const data = await runShopifyGraphql<SkuValidationResponse>(
     session,
-    `#graphql
-    query ValidateSku($query: String!) {
-      productVariants(first: 20, query: $query) {
-        nodes {
-          id
-          sku
-          product {
-            id
-            title
-          }
-          selectedOptions {
-            name
-            value
-          }
-        }
-      }
-    }
-    `,
+    VALIDATE_SKU_QUERY,
     { query: `sku:${sku}` }
   );
 

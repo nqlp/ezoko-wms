@@ -76,3 +76,15 @@ export type CorrectionLogInput = {
     token?: string | null;
     user?: string | null;
 };
+
+export type StockMovementLogInput = {
+    activity: Activity;
+    barcode?: string | null;
+    variantTitle?: string | null;
+    srcLocation?: string | null;
+    srcQty?: number | null;
+    destinationLocation?: string | null;
+    destinationQty?: number | null;
+    referenceDoc?: string | null;
+    user?: string | null;
+};

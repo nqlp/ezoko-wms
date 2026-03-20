@@ -8,20 +8,7 @@
 
 import { Activity } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-
-// ─── Types ──────────────────────────────────────────────────────────
-
-export type StockMovementLogInput = {
-    activity: Activity;
-    barcode?: string | null;
-    variantTitle?: string | null;
-    srcLocation?: string | null;
-    srcQty?: number | null;
-    destinationLocation?: string | null;
-    destinationQty?: number | null;
-    referenceDoc?: string | null;
-    user?: string | null;
-};
+import type { StockMovementLogInput } from "@/lib/validation/stockMovement";
 
 // ─── Public API ─────────────────────────────────────────────────────
 
@@ -36,7 +23,7 @@ export async function writeStockMovementLog(
     try {
         await prisma.stockMovementLog.create({
             data: {
-                activity: input.activity,
+                activity: input.activity as Activity,
                 barcode: input.barcode ?? null,
                 variantTitle: input.variantTitle ?? null,
                 srcLocation: input.srcLocation ?? null,
