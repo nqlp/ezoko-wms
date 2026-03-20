@@ -1,17 +1,18 @@
 import { NextRequest } from "next/server";
 import { shopify } from "@/lib/shopify-auth";
+import { ApiError } from "@/lib/http";
 
 export async function requireBearerAuth(request: NextRequest): Promise<{ userId: string }> {
     const authHeader = request.headers.get("authorization");
 
     if (!authHeader) {
-        throw new Error("Unauthorized: missing Authorization header");
+        throw new ApiError(401, "Unauthorized: missing Authorization header");
     }
 
     const match = authHeader.match(/^Bearer\s+(.+)$/i);
     const token = match?.[1];
     if (!token) {
-        throw new Error("Unauthorized: invalid header format");
+        throw new ApiError(401, "Unauthorized: invalid header format");
     }
 
     const payload = await shopify.session.decodeSessionToken(token, {
@@ -22,7 +23,7 @@ export async function requireBearerAuth(request: NextRequest): Promise<{ userId:
     if (expectedShop) {
         const tokenShop = new URL(payload.dest).hostname;
         if (tokenShop !== expectedShop) {
-            throw new Error("Unauthorized: shop domain mismatch");
+            throw new ApiError(401, "Unauthorized: shop domain mismatch");
         }
     }
 

@@ -84,18 +84,36 @@ function validateRow(
         const matches = skuMap.get(sku.toLowerCase()) ?? [];
         const match = matches[0];
         if (!match) {
-            issues.push({ rowNumber: row.rowNumber, sku, field: "sku", message: "SKU not found", severity: "error" });
+            issues.push({
+                rowNumber: row.rowNumber,
+                sku,
+                field: "sku",
+                message: "SKU not found",
+                severity: "error"
+            });
         } else {
             resolvedSku = match.sku;
             resolvedProductTitle = match.productTitle;
             resolvedVariantTitle = match.variantTitle;
         }
     } else if (!productHandle || !input.productHandleMapped) {
-        issues.push({ rowNumber: row.rowNumber, sku, field: "product_handle", message: "Product handle required", severity: "error" });
+        issues.push({
+            rowNumber: row.rowNumber,
+            sku,
+            field: "product_handle",
+            message: "Product handle required",
+            severity: "error"
+        });
     } else {
         const product = handleMap.get(productHandle.toLowerCase());
         if (!product) {
-            issues.push({ rowNumber: row.rowNumber, sku, field: "product_handle", message: "Product handle not found", severity: "error" });
+            issues.push({
+                rowNumber: row.rowNumber,
+                sku,
+                field: "product_handle",
+                message: "Product handle not found",
+                severity: "error"
+            });
         } else {
             resolvedProductTitle = product.title;
         }
