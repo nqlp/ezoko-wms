@@ -105,3 +105,15 @@ Used for state-mutating requests in the embedded app.
 2. Deletes the `UserSession` record from the database
 3. Clears all auth cookies
 4. Redirects to `https://accounts.shopify.com/logout`
+
+## Bearer Token Auth (Bin Location Extension)
+
+**File**: `lib/auth/bearer-token.ts`
+
+The Bin Location Extension runs in a Shopify Admin UI context and cannot use cookie-based sessions. Instead, it sends a Shopify session token via the `Authorization: Bearer <token>` header.
+
+| Function | Description |
+|----------|-------------|
+| `requireBearerAuth(request)` | Extracts Bearer token, decodes it via `shopify.session.decodeSessionToken()`, verifies shop domain, returns `{ userId }`. Throws `ApiError(401)` on failure. |
+
+**Used by**: `POST /api/stock-movements-logs`, `GET /api/stock-movements-logs`

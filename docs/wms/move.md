@@ -75,3 +75,4 @@ Activity type logged: `MOVEMENT`
 | `app/actions/moveStockBetweenBins.ts` | Server action — updates both bins and logs movement |
 | `app/actions/getVariantByBarcode.ts` | Server action — barcode → variant + binQty[] |
 | `lib/stockMovement.ts` | `logMoveActivity()` — writes to `StockMovementLog` |
+| `components/m/scanner/moveValidation.ts` | Pure validation functions — `resolveSourceBin()`, `validateMove()` |

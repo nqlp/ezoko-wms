@@ -67,3 +67,4 @@ Activity type logged: `PUTAWAY`
 | `components/m/useMobileScanner.ts` | State machine — `handleProductScan()` auto-selects RECEIVING |
 | `components/m/scanner/scannerRules.ts` | `findReceivingBin()`, `RECEIVING_BIN_LOCATION = "receiving"` |
 | `app/actions/moveStockBetweenBins.ts` | Server action — updates both bins and logs with `activity: PUTAWAY` |
+| `components/m/scanner/moveValidation.ts` | Source bin resolution (RECEIVING) and move validation |
