@@ -1,5 +1,6 @@
 "use client";
 
+import { resolveSourceBin, validateMove } from "./scanner/moveValidation";
 import { useReducer } from "react";
 import { executeStockMove, fetchVariantByBarcode } from "./scanner/scannerApi";
 import { initialScannerState, scannerReducer } from "./scanner/scannerState";
@@ -41,7 +42,10 @@ export function useMobileScanner(mode: ScannerMode) {
 
     const handleBinScan = async (barcode: string) => {
         if (!state.variant || state.stockLocation.length === 0) {
-            dispatch({ type: "SET_ERROR_MESSAGE", payload: `Barcode ${barcode} is NOT a PRODUCT barcode.` });
+            dispatch({
+                type: "SET_ERROR_MESSAGE",
+                payload: `Barcode ${barcode} is NOT a PRODUCT barcode.`
+            });
             return;
         }
 
@@ -55,50 +59,47 @@ export function useMobileScanner(mode: ScannerMode) {
             return;
         }
 
-        const receivingBin = findReceivingBin(state.stockLocation);
+        const sourceResult = resolveSourceBin({
+            mode,
+            stockLocation: state.stockLocation,
+            selectedBins: state.selectedBins,
+            destinationBinId: destinationBin.id,
+            productTitle: state.variant.product?.title,
+            variantTitle: state.variant.title,
+            barcode,
+        });
 
-        const sourceId = state.selectedBins[0];
-        const sourceBin = mode === "putaway"
-            ? receivingBin
-            : (sourceId
-                ? state.stockLocation.find((location) => location.id === sourceId) ?? null
-                : null);
-
-        if (!sourceBin) {
-            if (mode === "putaway") {
-                const productLabel = getProductLabel(
-                    state.variant.product?.title,
-                    state.variant.title,
-                    barcode
-                );
-                dispatch({ type: "SET_ERROR_MESSAGE", payload: `No stock on RECEIVING for PRODUCT ${productLabel}` });
-                return;
+        if ("error" in sourceResult) {
+            if (sourceResult.error) {
+                dispatch({ type: "SET_ERROR_MESSAGE", payload: sourceResult.error });
             }
-
-            dispatch({ type: "SET_SELECTED_BINS", payload: [destinationBin.id] });
             return;
         }
+
+        if ("selectBinId" in sourceResult) {
+            dispatch({ type: "SET_SELECTED_BINS", payload: [sourceResult.selectBinId] });
+            return;
+        }
+
+        const sourceBin = sourceResult.sourceBin;
 
         if (mode === "putaway" && state.selectedBins[0] !== sourceBin.id) {
             dispatch({ type: "SET_SELECTED_BINS", payload: [sourceBin.id] });
         }
 
-        if (destinationBin.id === sourceBin.id) {
-            dispatch({
-                type: "SET_ERROR_MESSAGE",
-                payload: `Source bin ${sourceBin.id} cannot be the same as destination bin`,
-            });
+        // Validate move 
+        const moveError = validateMove({
+            sourceBin,
+            destinationBin,
+            moveQty: state.moveQty,
+        });
+
+        if (moveError) {
+            dispatch({ type: "SET_ERROR_MESSAGE", payload: moveError });
             return;
         }
 
-        if (state.moveQty > sourceBin.qty) {
-            dispatch({
-                type: "SET_ERROR_MESSAGE",
-                payload: `Qty to move ${state.moveQty} is greater than qty on source bin (${sourceBin.qty})`,
-            });
-            return;
-        }
-
+        // Execute move 
         dispatch({ type: "SET_LOADING", payload: true });
         const moveResult = await executeStockMove({
             sourceBinId: sourceBin.id,
@@ -115,7 +116,10 @@ export function useMobileScanner(mode: ScannerMode) {
         dispatch({ type: "SET_LOADING", payload: false });
 
         if (!moveResult.success) {
-            dispatch({ type: "SET_ERROR_MESSAGE", payload: moveResult.message || "Failed to move stock" });
+            dispatch({
+                type: "SET_ERROR_MESSAGE",
+                payload: moveResult.message || "Failed to move stock"
+            });
             return;
         }
 
@@ -156,7 +160,10 @@ export function useMobileScanner(mode: ScannerMode) {
                             response.data.title,
                             trimmedBc
                         );
-                        dispatch({ type: "SET_ERROR_MESSAGE", payload: `No stock on RECEIVING for PRODUCT ${productLabel}` });
+                        dispatch({
+                            type: "SET_ERROR_MESSAGE",
+                            payload: `No stock on RECEIVING for PRODUCT ${productLabel}`
+                        });
                         return;
                     }
                     dispatch({ type: "SET_SELECTED_BINS", payload: [receivingBin.id] });
@@ -184,7 +191,10 @@ export function useMobileScanner(mode: ScannerMode) {
                 return;
             }
 
-            dispatch({ type: "SET_ERROR_MESSAGE", payload: response.message || "Error scanning barcode" });
+            dispatch({
+                type: "SET_ERROR_MESSAGE",
+                payload: response.message || "Error scanning barcode"
+            });
         } catch {
             dispatch({ type: "SET_ERROR_MESSAGE", payload: "Error scanning barcode" });
         } finally {
