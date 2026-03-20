@@ -1,17 +1,7 @@
 export type LogSortBy = "createdAt";
 export type LogSortDirection = "asc" | "desc";
-
-export const ACTIVITY_TYPES = [
-    "MOVEMENT",
-    "CORRECTION",
-    "GOODS_RECEIPT",
-    "PUTAWAY",
-    "PICKING",
-    "GOODS_ISSUE",
-    "INV_COUNTING",
-] as const;
-
-export type ActivityType = typeof ACTIVITY_TYPES[number];
+import { ACTIVITY_TYPES, type ActivityType } from "@/lib/constants";
+export { ACTIVITY_TYPES, type ActivityType };
 
 export interface LogFiltersState {
     activity: "" | ActivityType;
