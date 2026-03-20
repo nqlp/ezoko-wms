@@ -39,17 +39,20 @@ ezoko-frontend/
 │
 ├── components/
 │   ├── embedded/                 # Shopify Admin components (PO forms, logs, tables)
+│   │   └── hooks/                # Sub-hooks (SKU validation, product search, file import, submit)
 │   └── m/                        # Mobile WMS components (scanner, bin table, layout)
-│
+│       └── scanner/              # Scanner state, types, API, move validation
 ├── lib/
-│   ├── auth/                     # Session management, CSRF, token verification
+│   ├── auth/                     # Session management, CSRF, token verification, Bearer token auth
 │   ├── shopify/                  # GraphQL client, queries, mutations, catalog
 │   ├── types/                    # TypeScript types (ProductVariant, StockLocation, etc.)
-│   ├── validation/               # Zod schemas for PO and input validation
+│   ├── validation/               # Zod schemas (PO, logs, stock movements, field-level)
 │   ├── config/                   # Shopify configuration
+│   ├── constants.ts              # Shared domain constants (Activity types, PO statuses, currencies)
 │   ├── crypto/                   # Token encryption (AES-256)
-│   ├── logs/                     # Log filtering and types
-│   ├── po/                       # Purchase order service layer
+│   ├── activityLog.ts            # Server-side stock movement log writer
+│   ├── logs/                     # Log filtering, types, and service
+│   ├── po/                       # Purchase order service layer and import validation
 │   └── utils/                    # General utilities
 │
 ├── shared/                       # Shared code between main app and extensions

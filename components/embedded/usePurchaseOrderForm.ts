@@ -8,7 +8,6 @@ import type {
     FormLine,
     PurchaseOrderFormProps,
 } from '@/components/embedded/po-form.types';
-import { parseCsvHeaders } from '@/lib/po/item-import/parseCsvPurchaseOrderItems';
 import { useSkuValidation } from '@/components/embedded/hooks/useSkuValidation';
 import { useProductSearch } from '@/components/embedded/hooks/useProductSearch';
 import { usePurchaseOrderSubmit } from '@/components/embedded/hooks/usePurchaseOrderSubmit';
@@ -83,28 +82,6 @@ export function usePurchaseOrderForm({
     }, []);
 
 
-    const importItemsFromFile = useCallback(async (file: File) => {
-        dispatch({ type: "SET_HEADER_ERROR", error: null });
-
-        try {
-            const content = await file.text();
-            const parsed = parseCsvHeaders(content);
-
-            return parsed
-        }
-
-
-        catch (error) {
-            dispatch({
-                type: "SET_HEADER_ERROR",
-                error: "Failed to parse CSV file.",
-
-            });
-            console.error("Failed to parse CSV file", error);
-            return null;
-        }
-    }, []);
-
     return {
         bootstrap,
 
@@ -134,7 +111,6 @@ export function usePurchaseOrderForm({
         addLine,
         removeLine,
         updateLine,
-        importItemsFromFile,
         importLines: (lines: FormLine[]) => dispatch({ type: "IMPORT_LINES", lines }),
 
         // Search / autocomplete
