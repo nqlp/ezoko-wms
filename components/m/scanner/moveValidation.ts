@@ -1,6 +1,6 @@
 import type { StockLocation } from "@/lib/types/StockLocation";
 import type { ScannerMode } from "./scannerTypes";
-import { findReceivingBin, getProductLabel } from "../scannerRules";
+import { findReceivingBin, getProductLabel } from "@/lib/barcode/rules";
 
 interface ResolveSourceInput {
     mode: ScannerMode;
