@@ -56,11 +56,7 @@ export function useWarehouseStock(
           const parsed: StockItem[] = nodes.map((node) => {
             const fields = node.fields;
             const binLocationRef = fields.find((field) => field.key === "bin_location")?.reference;
-            const refFields = binLocationRef?.fields || [];
-            const binName =
-              resolveBinName(refFields, node.handle) ||
-              binLocationRef?.handle ||
-              node.handle;
+            const binName = resolveBinName(node.fields, binLocationRef?.handle ?? node.handle);
             const qty = getFieldValue(fields, "qty") || "0";
 
             return { id: node.id, bin: binName, qty: parseInt(qty, 10), binLocationId: binLocationRef?.id };
