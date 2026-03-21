@@ -18,7 +18,6 @@ scopes = "read_metaobject_definitions, write_metaobject_definitions, read_metaob
 
 [auth]
 redirect_urls = [
-  "https://shopify.dev/apps/default-app-home/api/auth",
   "http://localhost:3000/api/auth/shopify/callback",
   "https://ezoko-frontend-test.up.railway.app/api/auth/shopify/callback"
 ]
