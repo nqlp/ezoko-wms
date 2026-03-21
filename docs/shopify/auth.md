@@ -54,7 +54,7 @@ The embedded app uses Shopify's session token (JWT) instead of OAuth cookies. On
 | Function | Description |
 |----------|-------------|
 | `getSession()` | Reads `wms_session` cookie, returns `UserSession \| null` |
-| `requireSession()` | Same, but redirects to `/m/login` if no valid session |
+| `requireMobileSession()` | Same, but redirects to `/m/login` if no valid session |
 | `getCurrentUserName()` | Returns `shopifyUserName` from the current session |
 
 ### JWT Session Tokens (Embedded App)

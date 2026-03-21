@@ -3,7 +3,7 @@
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { UpdateBinQtyByID } from "../actions/updateBinQty";
 import { writeStockMovementLog } from "@/lib/activityLog";
-import { requireSession } from "@/lib/auth/session";
+import { requireMobileSession } from "@/lib/auth/session";
 
 interface MoveStockInput {
     sourceBinId: string;
@@ -30,7 +30,7 @@ export async function moveStockBetweenBins(input: MoveStockInput): Promise<ApiRe
         activity = "MOVEMENT",
     } = input;
 
-    const session = await requireSession();
+    const session = await requireMobileSession();
 
     if (!session) {
         return {

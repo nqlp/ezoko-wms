@@ -1,9 +1,9 @@
 import Image from "next/image";
 import WmsLayout from "@/components/m/wmsLayout";
-import { requireSession } from "@/lib/auth/session";
+import { requireMobileSession } from "@/lib/auth/session";
 
 export default async function MobilePage() {
-   const session = await requireSession();
+   const session = await requireMobileSession();
 
     return (
         <WmsLayout

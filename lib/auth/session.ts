@@ -22,7 +22,7 @@ export async function getSession() {
     });
 }
 
-export async function requireSession() {
+export async function requireMobileSession() {
     const session = await getSession();
     if (!session) {
         redirect("/m/login");

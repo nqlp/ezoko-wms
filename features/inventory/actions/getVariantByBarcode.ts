@@ -3,7 +3,7 @@
 import { findVariantsByBarcode } from "@/lib/shopify/offlineApi";
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { ProductVariant } from "@/lib/types/ProductVariant";
-import { requireSession } from "@/lib/auth/session";
+import { requireMobileSession } from "@/lib/auth/session";
 import { validateBarcodeLookup } from "@/lib/barcode/validation";
 
 export async function getVariantByBarcode(
@@ -12,7 +12,7 @@ export async function getVariantByBarcode(
   try {
     const trimmedBarcode = barcode.trim();
 
-    await requireSession();
+    await requireMobileSession();
 
     const productVariants = await findVariantsByBarcode(trimmedBarcode);
 
