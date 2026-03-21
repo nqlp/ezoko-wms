@@ -2,7 +2,7 @@
 
 client_id = "35367a71c431749ad1fa3d7f1bd04e94"
 name = "bin-location-extension"
-application_url = "https://ezoko-frontend-test.up.railway.app"
+application_url = "https://ezoko-frontend-test.up.railway.app/purchase-orders"
 embedded = true
 
 [build]
