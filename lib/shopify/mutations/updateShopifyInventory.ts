@@ -1,1 +1,0 @@
-export { INVENTORY_SET_QUANTITIES_MUTATION as SYNC_SHOPIFY_INVENTORY } from '@shared/graphql/mutations';

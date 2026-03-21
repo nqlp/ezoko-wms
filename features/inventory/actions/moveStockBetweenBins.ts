@@ -1,7 +1,7 @@
 "use server";
 
 import { ApiResponse } from "@/lib/types/ApiResponse";
-import { UpdateBinQtyByID } from "./updateBinQty";
+import { UpdateBinQtyByID } from "../actions/updateBinQty";
 import { writeStockMovementLog } from "@/lib/activityLog";
 import { requireSession } from "@/lib/auth/session";
 
