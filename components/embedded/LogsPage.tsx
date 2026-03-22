@@ -52,7 +52,6 @@ export function LogsPage() {
                 />
             </s-section>
 
-            {/* 4. Le tableau reçoit simplement les lignes. Il reste passif. */}
             <StockMovementsTable logs={rows} />
         </s-page>
     );

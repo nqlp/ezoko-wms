@@ -35,8 +35,7 @@ export function LogsFilters({
     return (
         <s-query-container>
             <s-grid gap="base" gridTemplateColumns="repeat(auto-fit, minmax(200px, 1fr))">
-
-                =                <s-grid-item>
+                <s-grid-item>
                     <s-select label="Activity" value={filters.activity} onChange={updateFilter("activity")}>
                         <s-option value="">All Activities</s-option>
                     </s-select>
