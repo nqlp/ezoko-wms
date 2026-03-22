@@ -1,14 +1,12 @@
 export const PO_HEADER_STATUS = [
   "OPEN",
   "CHECKEDIN",
-  "PART_RECEIVED",
   "RECEIVED",
   "CLOSED",
   "ARCHIVED"] as const;
 
 export const PO_ITEM_STATUS = [
   "OPEN",
-  "PART_RECEIVED",
   "RECEIVED",
   "CLOSED",
   "ARCHIVED"
@@ -64,7 +62,6 @@ export type ChipTone = "info" | "warning" | "success" | "critical" | "auto";
 export const STATUS_LABELS: Record<PoHeaderStatus, string> = {
   OPEN: "Open",
   CHECKEDIN: "Checked In",
-  PART_RECEIVED: "Partially Received",
   RECEIVED: "Received",
   CLOSED: "Closed",
   ARCHIVED: "Archived"
@@ -102,7 +99,6 @@ export const SORT_DIRECTION_OPTIONS = [
 export const PO_STATUS_TONE_MAP: Record<PoHeaderStatus, ChipTone> = {
   OPEN: "info",
   CHECKEDIN: "success",
-  PART_RECEIVED: "success",
   RECEIVED: "success",
   CLOSED: "auto",
   ARCHIVED: "auto",
