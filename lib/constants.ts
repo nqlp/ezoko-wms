@@ -99,5 +99,13 @@ export const SORT_DIRECTION_OPTIONS = [
   { value: "desc", label: "Descending" }
 ] as const;
 
+export const PO_STATUS_TONE_MAP: Record<PoHeaderStatus, ChipTone> = {
+  OPEN: "info",
+  CHECKEDIN: "success",
+  PART_RECEIVED: "success",
+  RECEIVED: "success",
+  CLOSED: "auto",
+  ARCHIVED: "auto",
+};
 export const SHOPIFY_LOGOUT_URL = "https://accounts.shopify.com/logout";
 export const DEFAULT_CURRENCY: Currency = "CAD";

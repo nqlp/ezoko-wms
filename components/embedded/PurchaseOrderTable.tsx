@@ -2,35 +2,8 @@
 
 import './PurchaseOrderTable.css';
 import { PoTableHeaders } from '@/components/embedded/PurchaseOrderUIOptions';
-
-function statusClass(status: string): string {
-    switch (status) {
-        case "OPEN":
-            return "status-pill status-open";
-        case "CHECKEDIN":
-        case "PART_RECEIVED":
-        case "RECEIVED":
-            return "status-pill status-checkedin";
-        case "CLOSED":
-        case "ARCHIVED":
-            return "status-pill status-closed";
-        default:
-            return "status-pill status-error";
-    }
-}
-
-function formatDate(value: string | null): string {
-    if (!value) {
-        return "";
-    }
-
-    const parsed = new Date(value);
-    if (Number.isNaN(parsed.getTime())) {
-        return value;
-    }
-
-    return parsed.toLocaleString();
-}
+import { formatDateTime } from '@/lib/utils/date';
+import { PoStatusChip } from './PoStatusChip';
 
 export interface PurchaseOrderTableRow {
     poNumber: string;
@@ -68,11 +41,11 @@ export function PurchaseOrderTable({ rows, inlineErrors, onCheckIn, onModify }: 
                             <s-table-cell>{row.itemCount}</s-table-cell>
                             <s-table-cell>{row.pieces}</s-table-cell>
                             <s-table-cell>
-                                <span className={statusClass(row.status)}>{row.status}</span>
+                                <PoStatusChip status={row.status} />
                             </s-table-cell>
-                            <s-table-cell>{formatDate(row.createdAt)}</s-table-cell>
-                            <s-table-cell>{formatDate(row.lastModification)}</s-table-cell>
-                            <s-table-cell>{formatDate(row.expectedDate)}</s-table-cell>
+                            <s-table-cell>{formatDateTime(row.createdAt)}</s-table-cell>
+                            <s-table-cell>{row.lastModification ? formatDateTime(row.lastModification) : ""}</s-table-cell>
+                            <s-table-cell>{row.expectedDate ? formatDateTime(row.expectedDate) : ""}</s-table-cell>
                             <s-table-cell>{row.importDuties ? "Yes" : "No"}</s-table-cell>
                             <s-table-cell>{row.importType}</s-table-cell>
                             <s-table-cell>{row.notes ? "X" : ""}</s-table-cell>
