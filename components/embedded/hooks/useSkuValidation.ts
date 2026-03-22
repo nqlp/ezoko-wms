@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useEffect } from "react";
-import { apiFetch } from "@/lib/client/api";
+import { validateSkuApi } from "@/lib/client/shopifyProductApi";
+import { interpretSkuMatches } from "@/lib/shopify/sku-utils";
 import type { FormLine } from "@/components/embedded/po-form.types";
 import type { FormAction } from "@/components/embedded/usePurchaseOrderForm";
 
@@ -34,57 +35,24 @@ export function useSkuValidation(params: {
 
         try {
             dispatch({ type: "SKU_VALIDATION_START", rowId });
-            const payload = await apiFetch<{
-                matches: Array<{
-                    variantId: string;
-                    sku: string;
-                    productId: string;
-                    productTitle: string;
-                    variantTitle: string;
-                }>;
-                count: number;
-            }>(`/api/shopify/variants/validate-sku?sku=${encodeURIComponent(sku)}`);
+            const payload = await validateSkuApi(sku);
 
-            if (payload.count === 0) {
+            const result = interpretSkuMatches(payload.matches);
+
+            if (!result.success) {
                 dispatch({
                     type: "UPDATE_LINE",
                     rowId,
                     updater: (line) => ({
                         ...line,
                         variantId: null,
-                        skuError: "SKU not found in Shopify variants",
+                        skuError: result.error,
                     }),
                 });
                 return;
             }
 
-            if (payload.count > 1) {
-                dispatch({
-                    type: "UPDATE_LINE",
-                    rowId,
-                    updater: (line) => ({
-                        ...line,
-                        variantId: null,
-                        skuError: "SKU matched multiple variants",
-                    }),
-                });
-                return;
-            }
-
-            const [match] = payload.matches;
-            if (!match) {
-                dispatch({
-                    type: "UPDATE_LINE",
-                    rowId,
-                    updater: (line) => ({
-                        ...line,
-                        variantId: null,
-                        skuError: "SKU validation returned no match",
-                    }),
-                });
-                return;
-            }
-
+            const match = result.match;
             dispatch({
                 type: "UPDATE_LINE",
                 rowId,
@@ -126,5 +94,3 @@ export function useSkuValidation(params: {
     };
 
 }
-
-

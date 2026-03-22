@@ -3,6 +3,7 @@
 import { onlineApi } from "@/lib/shopify/onlineApi";
 import { ShopifyClient } from "@/lib/shopify/client";
 import { ApiResponse } from "@/lib/types/ApiResponse";
+import { handleServerActionError } from "@/lib/server-action-utils";
 
 interface SyncShopifyInventoryResult {
   syncedAt: string | null;
@@ -36,10 +37,6 @@ export async function syncShopifyInventory(
       },
     };
   } catch (error) {
-    console.error("Error syncing Shopify inventory:", error);
-    return {
-      success: false,
-      message: "Failed to sync Shopify inventory",
-    };
+    return handleServerActionError(error, "Error syncing Shopify inventory");
   }
 }

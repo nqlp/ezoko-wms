@@ -8,6 +8,18 @@ import { z } from "zod";
 export const orderQtySchema = z.coerce.number().int().min(1, "Quantity must be at least 1");
 
 /**
+ * Positive integer quantity (>= 1) without coercion.
+ * Used when the input is already a number (e.g. from server-side logic).
+ */
+export const requiredQtySchema = z.number().int().min(1, "Quantity must be at least 1");
+
+/**
+ * Optional integer quantity, nullable.
+ * Used for optional quantity fields like srcQty, destinationQty in stock movements.
+ */
+export const optionalQtySchema = z.number().int().nullable().optional();
+
+/**
  * Non-negative monetary value with max 2 decimal places.
  * Used for unit cost, shipping fees, etc.
  * Accepts string input (from forms/CSV) and coerces to number.

@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { parseDate } from "@/lib/po/filters";
+import { dateRangeFilter } from "@/lib/utils/prisma-filters";
 import type { LogListFilters } from "@/lib/validation/logs";
 
 export const LOG_SORT_COLUMN_MAP = {
@@ -55,15 +55,9 @@ export function buildLogWhereQuery(filters: LogListFilters): Prisma.StockMovemen
         };
     }
 
-    const start = parseDate(filters.dateStart);
-    const end = parseDate(filters.dateEnd, {
-        endOfDay: true,
-    });
-
-    if (start || end) {
-        where.createdAt = {
-            ...(start ? { gte: start } : {}), ...(end ? { lte: end } : {})
-        };
+    const createdAtRange = dateRangeFilter(filters.dateStart, filters.dateEnd, { endOfDay: true });
+    if (createdAtRange) {
+        where.createdAt = createdAtRange;
     }
 
     return where;

@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import type { AuthenticatedSession } from '@/lib/auth/session-token';
 import { runShopifyGraphql } from '@/lib/shopify/graphql';
+import type { SkuValidationMatch } from '@/lib/shopify/sku-utils';
+export { interpretSkuMatches, type SkuValidationMatch } from '@/lib/shopify/sku-utils';
 import {
   VERIFY_PRODUCT_TITLE_QUERY,
   FIND_PRODUCT_BY_HANDLE_QUERY,
@@ -101,13 +103,6 @@ export interface ShopifyProductLite {
   variants: ShopifyVariantLite[];
 }
 
-export interface SkuValidationMatch {
-  variantId: string;
-  sku: string;
-  productId: string;
-  productTitle: string;
-  variantTitle: string;
-}
 
 export async function verifyProductTitlesExist(
   session: AuthenticatedSession,
@@ -318,3 +313,4 @@ export async function validateSku(session: AuthenticatedSession, rawSku: string)
       variantTitle: toVariantTitle(variant.selectedOptions, "Default Title"),
     }));
 }
+

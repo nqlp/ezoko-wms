@@ -5,6 +5,7 @@ import { ApiResponse } from "@/lib/types/ApiResponse";
 import { ProductVariant } from "@/lib/types/ProductVariant";
 import { requireMobileSession } from "@/lib/auth/session";
 import { validateBarcodeLookup } from "@/lib/barcode/validation";
+import { handleServerActionError } from "@/lib/server-action-utils";
 
 export async function getVariantByBarcode(
   barcode: string
@@ -19,20 +20,6 @@ export async function getVariantByBarcode(
     return validateBarcodeLookup(productVariants, trimmedBarcode);
 
   } catch (error) {
-    console.error("Error fetching product by barcode:", error);
-
-    if (error instanceof Error) {
-      return {
-        success: false,
-        message: error.message,
-        errorCode: "SERVER_ERROR",
-      };
-    }
-
-    return {
-      success: false,
-      message: "Erreur serveur",
-      errorCode: "SERVER_ERROR",
-    };
+    return handleServerActionError(error, "Error fetching product by barcode", "SERVER_ERROR");
   }
 }

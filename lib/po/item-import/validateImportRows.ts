@@ -1,6 +1,6 @@
 import type { AuthenticatedSession } from "@/lib/auth/session-token";
 import type { CsvValidationIssue, ValidatedCsvRow } from "@/lib/po/item-import/types";
-import { validateSku, validateProductByHandle } from "@/lib/shopify/catalog";
+import { validateSku, validateProductByHandle, interpretSkuMatches } from "@/lib/shopify/catalog";
 import { orderQtySchema, moneySchema } from "@/lib/validation/field-schemas";
 
 interface MappedRow {
@@ -82,19 +82,19 @@ function validateRow(
     // SKU or product handle resolution
     if (sku && input.skuMapped) {
         const matches = skuMap.get(sku.toLowerCase()) ?? [];
-        const match = matches[0];
-        if (!match) {
+        const skuResult = interpretSkuMatches(matches);
+        if (!skuResult.success) {
             issues.push({
                 rowNumber: row.rowNumber,
                 sku,
                 field: "sku",
-                message: "SKU not found",
+                message: skuResult.error,
                 severity: "error"
             });
         } else {
-            resolvedSku = match.sku;
-            resolvedProductTitle = match.productTitle;
-            resolvedVariantTitle = match.variantTitle;
+            resolvedSku = skuResult.match.sku;
+            resolvedProductTitle = skuResult.match.productTitle;
+            resolvedVariantTitle = skuResult.match.variantTitle;
         }
     } else if (!productHandle || !input.productHandleMapped) {
         issues.push({

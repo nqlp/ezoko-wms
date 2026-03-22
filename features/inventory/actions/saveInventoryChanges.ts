@@ -5,6 +5,7 @@ import { StockLocation } from "@/lib/types/StockLocation";
 import { syncShopifyInventory } from "./syncShopifyInventory";
 import { UpdateBinQtyByID } from "./updateBinQty";
 import { writeStockMovementLog } from "@/lib/activityLog";
+import { handleServerActionError } from "@/lib/server-action-utils";
 
 interface SaveInventoryChangesResult {
   syncedShopify: boolean;
@@ -94,10 +95,6 @@ export async function saveInventoryChanges(
       },
     };
   } catch (error) {
-    console.error("Error saving inventory changes:", error);
-    return {
-      success: false,
-      message: "Failed to save inventory changes.",
-    };
+    return handleServerActionError(error, "Error saving inventory changes");
   }
 }

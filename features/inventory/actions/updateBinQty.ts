@@ -3,6 +3,7 @@
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { UpdateStockResult } from "@/lib/types/ApiResponse";
 import { updateMetaobjectQty } from "@/lib/shopify/offlineApi";
+import { handleServerActionError } from "@/lib/server-action-utils";
 
 export async function UpdateBinQtyByID(
     id: string,
@@ -32,10 +33,6 @@ export async function UpdateBinQtyByID(
             },
         };
     } catch (error) {
-        console.error("Error updating bin quantity:", error);
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : "Failed to update bin quantity",
-        };
+        return handleServerActionError(error, "Error updating bin quantity");
     }
 }
