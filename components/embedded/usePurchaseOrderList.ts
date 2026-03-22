@@ -70,6 +70,8 @@ export default function usePurchaseOrderList() {
         nextSortBy = sortBy,
         nextSortDirection = sortDirection
     ) => {
+        if (bootstrap.loading || bootstrap.error) return;
+
         try {
             setLoading(true);
             setError(null);
@@ -83,7 +85,7 @@ export default function usePurchaseOrderList() {
         } finally {
             setLoading(false);
         }
-    }, [filters, sortBy, sortDirection]);
+    }, [bootstrap.loading, bootstrap.error, filters, sortBy, sortDirection]);
 
     useEffect(() => {
         if (bootstrap.loading || bootstrap.error || initialized) return;
