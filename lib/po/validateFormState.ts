@@ -40,10 +40,15 @@ export function validatePurchaseOrderForm(
         }
     }
 
+    const vendor = state.vendor.trim();
+    if (!vendor || vendor === "Select Vendor" || vendor === "Loading vendors...") {
+        return { success: false, headerError: "Vendor is required" };
+    }
+
     // Build the raw payload from form state
     const raw = {
         header: {
-            vendor: state.vendor.trim(),
+            vendor,
             importDuties: state.importDuties,
             importType: state.importType,
             expectedDate: state.expectedDate || null,
