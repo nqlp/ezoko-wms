@@ -15,3 +15,7 @@ export function parseOrThrow<TSchema extends z.ZodTypeAny>(
 
   return parsed.data;
 }
+
+export function isValidBarcodeEntry(value: string): boolean {
+    return value === "" || /^\d+$/.test(value);
+}
