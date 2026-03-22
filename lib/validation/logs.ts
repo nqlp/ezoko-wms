@@ -10,7 +10,6 @@ export const listLogsFilterSchema = z.object({
     sortBy: z.enum(["createdAt"]).optional().default("createdAt"),
     sortDirection: z.enum(["asc", "desc"]).optional().default("desc"),
     referenceDoc: z.string().trim().optional(),
-    sku: z.string().trim().optional(),
     variantTitle: z.string().trim().optional(),
     srcLocation: z.string().trim().optional(),
     destinationLocation: z.string().trim().optional(),

@@ -80,16 +80,7 @@ export function LogsFilters({
                     />
                 </s-grid-item>
 
-                <s-grid-item>
-                    <s-search-field
-                        label="SKU"
-                        value={filters.sku}
-                        placeholder="Search by SKU..."
-                        onChange={(e: Event) => onFiltersChange({ ...filters, sku: (e.target as HTMLInputElement).value })}
-                    />
-                </s-grid-item>
-
-                <s-grid-item>
+<s-grid-item>
                     <s-search-field
                         label="Variant"
                         value={filters.variantTitle}
