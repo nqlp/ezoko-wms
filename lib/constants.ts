@@ -65,6 +65,17 @@ export const ACTIVITY_TYPES = [
   "INV_COUNTING",
 ] as const;
 
+export const ACTIVITY_TONE_MAP: Record<ActivityType, ChipTone> = {
+    MOVEMENT: "info",
+    CORRECTION: "warning",
+    GOODS_RECEIPT: "success",
+    PUTAWAY: "info",
+    PICKING: "auto",
+    GOODS_ISSUE: "critical",
+    INV_COUNTING: "auto",
+};
+
+export type ChipTone = "info" | "warning" | "success" | "critical" | "auto";
 export type ActivityType = typeof ACTIVITY_TYPES[number];
 export type PoHeaderStatus = (typeof PO_HEADER_STATUS)[number];
 export type PoItemStatus = (typeof PO_ITEM_STATUS)[number];

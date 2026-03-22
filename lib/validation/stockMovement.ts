@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { ACTIVITY_TYPES } from "@/lib/logs/types";
+import { ACTIVITY_TYPES } from "@/lib/constants";
 
 export const stockMovementLogInputSchema = z.object({
   activity: z.enum(ACTIVITY_TYPES),

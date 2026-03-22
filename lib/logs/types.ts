@@ -1,7 +1,6 @@
 export type LogSortBy = "createdAt";
 export type LogSortDirection = "asc" | "desc";
-import { ACTIVITY_TYPES, type ActivityType } from "@/lib/constants";
-export { ACTIVITY_TYPES, type ActivityType };
+import { type ActivityType } from "@/lib/constants";
 
 export interface LogFiltersState {
     activity: "" | ActivityType;
