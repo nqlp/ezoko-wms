@@ -26,3 +26,14 @@ export function getOAuthErrorDetail(error: unknown): AuthErrorDetail {
         status: 500
     };
 }
+
+export function getAvatarInitials(name?: string | null, email?: string | null): string {
+    const trimmedName = name?.trim();
+    if (trimmedName) {
+        const parts = trimmedName.split(/\s+/);
+        const firstInitial = parts[0][0] || "";
+        const secondInitial = parts[parts.length - 1][0] || "";
+        return `${firstInitial}${secondInitial}`.toUpperCase();
+    }
+    return email?.[0]?.toUpperCase() ?? "?";
+}
