@@ -19,12 +19,10 @@ interface LogsFiltersProps {
 
 export function LogsFilters({
     filters,
-    sortBy,
     sortDirection,
     hasActiveFilters,
     loading,
     onFiltersChange,
-    onSortByChange,
     onSortDirectionChange,
     onApply,
     onReset,
