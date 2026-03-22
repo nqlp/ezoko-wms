@@ -1,6 +1,9 @@
 import { exchangeCodeForToken, generateSessionToken } from "@/lib/shopify-auth";
 import { prisma } from "@/lib/prisma";
 import { encryptAccessToken } from "@/lib/crypto/token-encryption";
+import { NextResponse } from "next/server";
+import { getAuthorizationUrl, generateState } from "@/lib/shopify-auth"; 
+import { setAuthStateCookies } from "./cookies";
 
 type OAuthCallbackParams = {
     code: string;
@@ -88,4 +91,25 @@ export async function handleOAuthCallback(
         redirectUrl: `${appUrl}/m`,
         sessionToken
     };
+}
+
+export async function initiateShopifyAuth(online: boolean) {
+    const shop = process.env.SHOPIFY_STORE_DOMAIN;
+
+    if (!shop) {
+        return NextResponse.json(
+            { error: "Missing shop parameter (SHOPIFY_STORE_DOMAIN)" },
+            { status: 500 }
+        );
+    }
+
+    const state = generateState();
+    const type = online ? "online" : "offline";
+    const authUrl = getAuthorizationUrl(shop, state, { online });
+
+    const response = NextResponse.redirect(authUrl);
+    
+    setAuthStateCookies(response, state, type);
+
+    return response;
 }

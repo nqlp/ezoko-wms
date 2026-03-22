@@ -34,3 +34,23 @@ export function setSessionCookie(response: NextResponse, sessionToken: string) {
         path: "/",
     });
 }
+
+export const AUTH_COOKIE_MAX_AGE = 60 * 10; // 10 minutes
+
+export function setAuthStateCookies(
+    response: NextResponse,
+    state: string,
+    type: "online" | "offline"
+) {
+    const isProduction = process.env.NODE_ENV === "production";
+    const options = {
+        httpOnly: true,
+        secure: isProduction,
+        sameSite: "lax" as const,
+        maxAge: AUTH_COOKIE_MAX_AGE,
+        path: "/",
+    };
+
+    response.cookies.set("shopify_auth_state", state, options);
+    response.cookies.set("shopify_auth_type", type, options);
+}
