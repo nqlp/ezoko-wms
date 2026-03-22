@@ -1,6 +1,10 @@
 "use client";
 
-import { CurrencyOptions, ImportTypeOptions, VendorOptions } from '@/components/embedded/PurchaseOrderUIOptions';
+import {
+    PoCurrencyOptions,
+    PoImportTypeOptions,
+    VendorOptions
+} from '@/components/embedded/PurchaseOrderUIOptions';
 import { eventValue } from '@/components/embedded/po-form.utils';
 
 interface PurchaseOrderHeaderProps {
@@ -62,7 +66,7 @@ export function PurchaseOrderHeader({ readOnly, header, vendors }: PurchaseOrder
                         disabled={readOnly}
                         onChange={(event: Event) => header.setImportType(eventValue(event))}
                     >
-                        <ImportTypeOptions />
+                        <PoImportTypeOptions />
                     </s-select>
                 </s-grid-item>
 
@@ -94,7 +98,7 @@ export function PurchaseOrderHeader({ readOnly, header, vendors }: PurchaseOrder
                         disabled={readOnly}
                         onChange={(event: Event) => header.setPurchaseOrderCurrency(eventValue(event))}
                     >
-                        <CurrencyOptions />
+                        <PoCurrencyOptions />
                     </s-select>
                 </s-grid-item>
 
