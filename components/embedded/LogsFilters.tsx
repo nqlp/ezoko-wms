@@ -1,6 +1,7 @@
 "use client";
 
-import { ACTIVITY_TYPES, ActivityType, LogFiltersState, getLogControlValue } from "@/lib/logs/types";
+import { LogFiltersState, getLogControlValue } from "@/lib/logs/types";
+import { ACTIVITY_TYPES, type ActivityType } from "@/lib/constants";
 
 interface LogsFiltersProps {
     filters: LogFiltersState;
