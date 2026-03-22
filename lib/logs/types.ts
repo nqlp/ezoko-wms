@@ -25,16 +25,18 @@ export { getControlValue as getLogControlValue } from "@/lib/utils/domEvents";
 export function toLogQueryParams(
     filters: LogFiltersState,
     sortBy: LogSortBy,
-    sortDirection: LogSortDirection): string {
+    sortDirection: LogSortDirection
+): string {
     const params = new URLSearchParams();
 
-    if (filters.activity) params.set("activity", filters.activity);
-    if (filters.user) params.set("user", filters.user);
-    if (filters.dateStart) params.set("dateStart", filters.dateStart);
-    if (filters.dateEnd) params.set("dateEnd", filters.dateEnd);
-    if (filters.barcode) params.set("barcode", filters.barcode);
-    if (filters.referenceDoc) params.set("referenceDoc", filters.referenceDoc);
+    Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined && value !== null && value !== "") {
+            params.set(key, value.toString());
+        }
+    });
+
     params.set("sortBy", sortBy);
     params.set("sortDirection", sortDirection);
+
     return params.toString();
 }
