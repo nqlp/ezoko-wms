@@ -34,6 +34,27 @@ export function buildLogWhereQuery(filters: LogListFilters): Prisma.StockMovemen
         };
     }
 
+    if (filters.variantTitle) {
+        where.variantTitle = {
+            contains: filters.variantTitle,
+            mode: "insensitive",
+        };
+    }
+
+    if (filters.srcLocation) {
+        where.srcLocation = {
+            contains: filters.srcLocation,
+            mode: "insensitive",
+        };
+    }
+
+    if (filters.destinationLocation) {
+        where.destinationLocation = {
+            contains: filters.destinationLocation,
+            mode: "insensitive",
+        };
+    }
+
     const start = parseDate(filters.dateStart);
     const end = parseDate(filters.dateEnd, {
         endOfDay: true,

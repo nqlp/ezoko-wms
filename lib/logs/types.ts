@@ -9,6 +9,10 @@ export interface LogFiltersState {
     dateEnd: string;
     barcode: string;
     referenceDoc: string;
+    sku: string;
+    variantTitle: string;
+    srcLocation: string;
+    destinationLocation: string;
 }
 
 export const EMPTY_LOG_FILTERS: LogFiltersState = {
@@ -18,6 +22,10 @@ export const EMPTY_LOG_FILTERS: LogFiltersState = {
     dateEnd: "",
     barcode: "",
     referenceDoc: "",
+    sku: "",
+    variantTitle: "",
+    srcLocation: "",
+    destinationLocation: "",
 };
 
 export { getControlValue as getLogControlValue } from "@/lib/utils/domEvents";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "@/lib/client/api";
 import { useEmbeddedBootstrap } from "@/lib/client/hooks";
@@ -65,10 +65,17 @@ export default function usePurchaseOrderList() {
     const [initialized, setInitialized] = useState(false);
     const [createSuccessMessage, setCreateSuccessMessage] = useState<string | null>(null);
 
+    const filtersRef = useRef(filters);
+    filtersRef.current = filters;
+    const sortByRef = useRef(sortBy);
+    sortByRef.current = sortBy;
+    const sortDirectionRef = useRef(sortDirection);
+    sortDirectionRef.current = sortDirection;
+
     const loadRows = useCallback(async (
-        nextFilters = filters,
-        nextSortBy = sortBy,
-        nextSortDirection = sortDirection
+        nextFilters = filtersRef.current,
+        nextSortBy = sortByRef.current,
+        nextSortDirection = sortDirectionRef.current
     ) => {
         if (bootstrap.loading || bootstrap.error) return;
 
@@ -85,7 +92,7 @@ export default function usePurchaseOrderList() {
         } finally {
             setLoading(false);
         }
-    }, [bootstrap.loading, bootstrap.error, filters, sortBy, sortDirection]);
+    }, [bootstrap.loading, bootstrap.error]);
 
     useEffect(() => {
         if (bootstrap.loading || bootstrap.error || initialized) return;
