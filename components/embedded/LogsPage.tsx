@@ -5,14 +5,29 @@ import { LogsFilters } from "@/components/embedded/LogsFilters";
 import StockMovementsTable from "@/components/embedded/Logs";
 
 export function LogsPage() {
-    const list = useLogsList();
+    const {
+        rows,
+        filters,
+        sortBy,
+        sortDirection,
+        loading,
+        error,
+        initialized,
+        bootstrap,
+        setFilters,
+        setSortBy,
+        setSortDirection,
+        loadRows,
+        resetFilters,
+        hasActiveFilters,
+    } = useLogsList();
 
-    if (list.bootstrap.loading || !list.initialized) {
+    if (bootstrap.loading || !initialized) {
         return <div className="panel">Loading logs...</div>;
     }
 
-    if (list.bootstrap.error) {
-        return <div className="panel error-text">{list.bootstrap.error}</div>;
+    if (bootstrap.error) {
+        return <div className="panel error-text">{bootstrap.error}</div>;
     }
 
     return (
@@ -20,19 +35,25 @@ export function LogsPage() {
             <s-section>
                 <s-section-header>
                     <s-heading>Stock Movement Logs</s-heading>
-                    {list.error ? <s-banner tone="critical" error={list.error} /> : null}
+                    {error ? <s-banner tone="critical" error={error} /> : null}
                 </s-section-header>
+
                 <LogsFilters
-                    filters={list.filters}
-                    hasActiveFilters={list.hasActiveFilters}
-                    loading={list.loading}
-                    onFiltersChange={list.setFilters}
-                    onApply={() => list.loadRows()}
-                    onReset={list.resetFilters}
+                    filters={filters}
+                    sortBy={sortBy}
+                    sortDirection={sortDirection}
+                    hasActiveFilters={hasActiveFilters}
+                    loading={loading}
+                    onFiltersChange={setFilters}
+                    onSortByChange={setSortBy}
+                    onSortDirectionChange={setSortDirection}
+                    onApply={() => void loadRows()}
+                    onReset={resetFilters}
                 />
             </s-section>
 
-            <StockMovementsTable logs={list.rows} />
+            {/* 4. Le tableau reçoit simplement les lignes. Il reste passif. */}
+            <StockMovementsTable logs={rows} />
         </s-page>
     );
 }
