@@ -80,7 +80,7 @@ export function LogsFilters({
                     />
                 </s-grid-item>
 
-<s-grid-item>
+                <s-grid-item>
                     <s-search-field
                         label="Variant"
                         value={filters.variantTitle}
@@ -105,12 +105,6 @@ export function LogsFilters({
                         placeholder="Search by location..."
                         onChange={(e: Event) => onFiltersChange({ ...filters, destinationLocation: (e.target as HTMLInputElement).value })}
                     />
-                </s-grid-item>
-
-                <s-grid-item>
-                    <s-select label="Sort By" value={sortBy} onChange={(e: Event) => onSortByChange(getLogControlValue(e) as LogSortBy)}>
-                        <s-option value="createdAt">Date Created</s-option>
-                    </s-select>
                 </s-grid-item>
 
                 <s-grid-item>
