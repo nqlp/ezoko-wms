@@ -2,7 +2,6 @@
 
 import { Box, TextField } from "@mui/material";
 import { useScanner } from "@/lib/client/hooks/useScanner";
-import { isValidBarcodeEntry } from "@/lib/validation/utils";
 
 const isEditable = (el: Element | null) =>
     el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || (el as HTMLElement)?.isContentEditable;
@@ -36,12 +35,7 @@ export default function ScanInput({ onSubmit }: { onSubmit: (b: string) => void 
             <TextField
                 variant="outlined"
                 value={manualValue}
-                onChange={(e) => {
-                    const value = e.target.value;
-                    if (isValidBarcodeEntry(value)) {
-                        setManualValue(value);
-                    }
-                }}
+                onChange={(e) => setManualValue(e.target.value)}
                 placeholder="MANUAL BARCODE"
                 fullWidth
                 onFocus={() => setManualFocused(true)}
@@ -52,12 +46,6 @@ export default function ScanInput({ onSubmit }: { onSubmit: (b: string) => void 
                             focusCatcher(false);
                         }
                     }, 0);
-                }}
-                slotProps={{
-                    htmlInput: {
-                        inputMode: "numeric",
-                        pattern: "[0-9]*"
-                    },
                 }}
                 onKeyDown={(e) => e.key === "Enter" && submitManualValue()}
             />

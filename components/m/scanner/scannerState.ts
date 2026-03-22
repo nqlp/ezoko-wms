@@ -1,8 +1,8 @@
 import { ProductVariant } from "@/lib/types/ProductVariant";
 import { StockLocation } from "@/lib/types/StockLocation";
 
-const DEFAULT_ERROR_HIDE_MS = 3000; // 3 seconds
-const DEFAULT_SUCCESS_HIDE_MS = 5000; // 5 seconds
+export const DEFAULT_ERROR_HIDE_MS = 3000; // 3 seconds
+export const DEFAULT_SUCCESS_HIDE_MS = 5000; // 5 seconds
 
 export type ScannerState = {
     errorMessage: string | null;

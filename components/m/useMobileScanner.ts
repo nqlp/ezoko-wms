@@ -1,9 +1,14 @@
 "use client";
 
 import { resolveSourceBin, validateMove } from "./scanner/moveValidation";
-import { useReducer } from "react";
+import { useCallback, useReducer } from "react";
 import { executeStockMove, fetchVariantByBarcode } from "./scanner/scannerApi";
-import { initialScannerState, scannerReducer } from "./scanner/scannerState";
+import {
+    DEFAULT_ERROR_HIDE_MS,
+    DEFAULT_SUCCESS_HIDE_MS,
+    initialScannerState,
+    scannerReducer
+} from "./scanner/scannerState";
 import type { MovementActivity, ScannerMode } from "./scanner/scannerTypes";
 import {
     findBinByBarcode,
@@ -21,26 +26,26 @@ function resolveMovementActivity(mode: ScannerMode): MovementActivity {
 export function useMobileScanner(mode: ScannerMode) {
     const [state, dispatch] = useReducer(scannerReducer, initialScannerState);
 
-    const handleMoveQtyChange = (qty: number) => {
+    const handleMoveQtyChange = useCallback((qty: number) => {
         if (!Number.isInteger(qty)) {
             return;
         }
         dispatch({ type: "SET_MOVE_QTY", payload: Math.max(1, qty) });
-    };
+    }, []);
 
-    const resetScanFeedback = () => {
+    const resetScanFeedback = useCallback(() => {
         dispatch({ type: "RESET_SCAN_FEEDBACK" });
-    };
+    }, []);
 
-    const resetVariantSelection = () => {
+    const resetVariantSelection = useCallback(() => {
         dispatch({ type: "RESET_VARIANT_SELECTION" });
-    };
+    }, []);
 
-    const clearMoveWorkflow = () => {
+    const clearMoveWorkflow = useCallback(() => {
         dispatch({ type: "CLEAR_MOVE_WORKFLOW" });
-    };
+    }, []);
 
-    const handleBinScan = async (barcode: string) => {
+    const handleBinScan = useCallback(async (barcode: string) => {
         if (!state.variant || state.stockLocation.length === 0) {
             dispatch({
                 type: "SET_ERROR_MESSAGE",
@@ -56,6 +61,7 @@ export function useMobileScanner(mode: ScannerMode) {
                 type: "SET_ERROR_MESSAGE",
                 payload: `Only source bin could be scanned at this point. ${barcode} is not a source bin.`,
             });
+            dispatch({ type: "SET_ERROR_AUTO_HIDE_DURATION", payload: DEFAULT_ERROR_HIDE_MS });
             return;
         }
 
@@ -96,6 +102,7 @@ export function useMobileScanner(mode: ScannerMode) {
 
         if (moveError) {
             dispatch({ type: "SET_ERROR_MESSAGE", payload: moveError });
+            dispatch({ type: "SET_ERROR_AUTO_HIDE_DURATION", payload: DEFAULT_ERROR_HIDE_MS });
             return;
         }
 
@@ -127,10 +134,11 @@ export function useMobileScanner(mode: ScannerMode) {
             type: "SET_SUCCESS_MESSAGE",
             payload: `Qty of ${state.moveQty} successfully moved from ${sourceBin.binLocation} to ${destinationBin.binLocation}`,
         });
+        dispatch({ type: "SET_SUCCESS_AUTO_HIDE_DURATION", payload: DEFAULT_SUCCESS_HIDE_MS });
         clearMoveWorkflow();
-    };
+    }, [clearMoveWorkflow, mode, state.moveQty, state.selectedBins, state.stockLocation, state.variant]);
 
-    const handleProductScan = async (barcode: string) => {
+    const handleProductScan = useCallback(async (barcode: string) => {
         const trimmedBc = trimmedBarcode(barcode);
 
         if (state.variant && state.currentProductBarcode === trimmedBc) {
@@ -176,12 +184,14 @@ export function useMobileScanner(mode: ScannerMode) {
                         type: "SET_ERROR_MESSAGE",
                         payload: `No Bin location stock for "${productTitle}" "${variantTitle}"`,
                     });
+                    dispatch({ type: "SET_ERROR_AUTO_HIDE_DURATION", payload: DEFAULT_ERROR_HIDE_MS });
                 }
                 return;
             }
 
             if (response.errorCode === "MULTIPLE_VARIANTS") {
                 dispatch({ type: "SET_INLINE_ERROR_MESSAGE", payload: response.message });
+                dispatch({ type: "SET_ERROR_AUTO_HIDE_DURATION", payload: DEFAULT_ERROR_HIDE_MS });
                 return;
             }
 
@@ -200,9 +210,9 @@ export function useMobileScanner(mode: ScannerMode) {
         } finally {
             dispatch({ type: "SET_LOADING", payload: false });
         }
-    };
+    }, [mode, resetVariantSelection, state.currentProductBarcode, state.variant]);
 
-    const handleScan = async (barcode: string) => {
+    const handleScan = useCallback(async (barcode: string) => {
         if (!barcode) return;
 
         resetScanFeedback();
@@ -216,17 +226,26 @@ export function useMobileScanner(mode: ScannerMode) {
         if (isProductBarcode(barcode)) {
             await handleProductScan(barcode);
         }
-    };
+    }, [handleBinScan, handleProductScan, resetScanFeedback]);
 
-    const closeError = () => dispatch({ type: "SET_ERROR_MESSAGE", payload: null });
-    const closeSuccess = () => dispatch({ type: "SET_SUCCESS_MESSAGE", payload: null });
-    const handleBinSelection = (bins: string[]) => {
+    const closeError = useCallback(() => dispatch({
+        type: "SET_ERROR_MESSAGE",
+        payload: null
+    }), []);
+
+    const closeSuccess = useCallback(() => dispatch({
+        type: "SET_SUCCESS_MESSAGE",
+        payload: null
+    }), []);
+
+    const handleBinSelection = useCallback((bins: string[]) => {
         if (mode === "putaway") {
             return;
         }
 
         dispatch({ type: "SET_SELECTED_BINS", payload: bins });
-    };
+
+    }, [mode, dispatch]);
     return {
         closeError,
         closeSuccess,

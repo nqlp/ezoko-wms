@@ -79,7 +79,6 @@ export default function MobileScanner({ mode }: MobileScannerProps) {
                     stockLocation={stockLocation}
                     selectedBins={selectedBins}
                     onBinSelectionChange={handleBinSelection}
-                    moveQty={moveQty}
                     selectionDisabled={mode === "putaway"}
                 />
             )}
