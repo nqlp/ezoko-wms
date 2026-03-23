@@ -1,4 +1,4 @@
-export const FIND_VARIANTS_BY_BARCODE_QUERY = /* GraphQL */ `
+export const FIND_VARIANTS_BY_BARCODE_QUERY = `#graphql
 query GetVariantByBarcode($query: String!) {
     productVariants(first: 2, query: $query) {
       nodes {
@@ -27,14 +27,6 @@ query GetVariantByBarcode($query: String!) {
             }
           }
         }
-
-        # backorder (continue / deny)
-        inventoryPolicy
-
-        position
-        availableForSale
-        compareAtPrice
-        taxable
 
         # metafield variant
         metafields(first: 250) { 
@@ -68,17 +60,6 @@ query GetVariantByBarcode($query: String!) {
             }
           }
         } 
-
-        # price
-        unitPrice {
-          amount
-          currencyCode
-        }
-
-        unitPriceMeasurement {
-          measuredType
-          quantityUnit
-        }
         
         inventoryItem {
         id

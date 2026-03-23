@@ -2,7 +2,7 @@
 
 client_id = "35367a71c431749ad1fa3d7f1bd04e94"
 name = "bin-location-extension"
-application_url = "https://shopify.dev/apps/default-app-home"
+application_url = "https://ezoko-frontend-test.up.railway.app/purchase-orders"
 embedded = true
 
 [build]
@@ -17,7 +17,6 @@ scopes = "read_metaobject_definitions, write_metaobject_definitions, read_metaob
 
 [auth]
 redirect_urls = [
-  "https://shopify.dev/apps/default-app-home/api/auth",
   "http://localhost:3000/api/auth/shopify/callback",
   "https://ezoko-frontend-test.up.railway.app/api/auth/shopify/callback"
 ]

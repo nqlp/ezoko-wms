@@ -1,4 +1,5 @@
 import Papa from "papaparse";
+import { MappedRow, RowToValidate } from "./types";
 
 export type ParseCsvData = {
     headers: string[];
@@ -41,4 +42,23 @@ export function parseCsvHeaders(csvContent: string): ParseCsvData {
         firstDataRow: allRows[0] ?? {},
         allRows,
     };
+}
+
+export function prepareRowsForValidation(mappedRows: MappedRow[]): RowToValidate[] {
+    return mappedRows.map((row, index) => ({
+        ...row,
+        rowNumber: index + 2,
+    }));
+}
+
+import { CsvColumnMapping } from "@/lib/po/item-import/types";
+
+export function getMappingStatus(mapping: CsvColumnMapping[]) {
+    return {
+        skuMapped: mapping.some(m => m.targetField === "sku"),
+        productHandleMapped: mapping.some(m => m.targetField === "product_handle"),
+        variantMapped: mapping.some(m => m.targetField === "variant"),
+        qtyMapped: mapping.some(m => m.targetField === "qty"),
+        unitCostMapped: mapping.some(m => m.targetField === "unit_cost"),
+    }
 }

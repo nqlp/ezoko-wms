@@ -1,9 +1,9 @@
 import WmsLayout from "@/components/m/wmsLayout";
 import MobileScanner from "@/components/m/MobileScanner";
-import { requireSession } from "@/lib/auth/session";
+import { requireMobileSession } from "@/lib/auth/session";
 
 export default async function PutawayPage() {
-   const session = await requireSession();
+   const session = await requireMobileSession();
 
     return (
         <WmsLayout

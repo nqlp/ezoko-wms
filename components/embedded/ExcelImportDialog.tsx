@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import type { FormLine } from "./po-form.types";
-import { eventValue, lineId } from "./po-form.utils";
+import { createFormLinesFromValidRows, eventValue } from "./po-form.utils";
 import type { CsvColumnMapping, CsvTargetField, CsvValidationResult } from "@/lib/po/item-import/types";
 import { TARGET_FIELDS } from "@/lib/po/item-import/types";
-import { applyColumnMapping } from "@/lib/po/item-import/parseCsvPurchaseOrderItems";
+import { applyColumnMapping, prepareRowsForValidation, getMappingStatus } from "@/lib/po/item-import/parseCsvPurchaseOrderItems";
 import { apiFetch } from "@/lib/client/api";
 import TableValidationReport from "./TableValidationReport";
 
@@ -40,16 +40,10 @@ export function ExcelImportDialog({
         setValidationResult(null);
 
         try {
-            const skuMapped = mapping.some(m => m.targetField === "sku")
-            const productHandleMapped = mapping.some(m => m.targetField === "product_handle")
-            const qtyMapped = mapping.some(m => m.targetField === "qty")
-            const unitCostMapped = mapping.some(m => m.targetField === "unit_cost")
-            const activeMappings = mapping.filter(m => m.targetField !== null) as { csvColumn: string; targetField: string }[];
+            const mappingStatus = getMappingStatus(mapping);
+            const activeMappings = mapping.filter(m => m.targetField !== null) as { csvColumn: string; targetField: CsvTargetField }[];
             const mappedRows = applyColumnMapping(allRows, activeMappings);
-            const rowWithNumbers = mappedRows.map((row, index) => ({
-                ...row,
-                rowNumber: index + 2,
-            }));
+            const rowsToValidate = prepareRowsForValidation(mappedRows);
 
             const response = await apiFetch<CsvValidationResult>("/api/shopify/products/validate-excel-import", {
                 method: "POST",
@@ -57,11 +51,8 @@ export function ExcelImportDialog({
                     "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    rows: rowWithNumbers,
-                    skuMapped,
-                    productHandleMapped,
-                    qtyMapped,
-                    unitCostMapped,
+                    rows: rowsToValidate,
+                    ...mappingStatus
                 })
             })
 
@@ -171,23 +162,9 @@ export function ExcelImportDialog({
                     variant="primary"
                     disabled={validationResult?.hasErrors}
                     onClick={() => {
-                        if (!validationResult) return;
-                        const formLine = validationResult.validRows?.map((row) => {
-                            return {
-                                rowId: lineId(),
-                                sku: row.sku,
-                                productId: null,
-                                variantId: null,
-                                productTitle: row.productTitle,
-                                variantTitle: row.variantTitle,
-                                orderQty: String(row.orderQty),
-                                unitCost: row.unitCost != null ? String(row.unitCost) : "",
-                                skuError: null,
-
-                            }
-                        })
-                        onImport(formLine ?? []);
-
+                        if (!validationResult?.validRows) return;
+                        const formLines: FormLine[] = createFormLinesFromValidRows(validationResult.validRows);
+                        onImport(formLines);
                     }}
                 >
                     Save

@@ -1,4 +1,4 @@
-export const VARIANT_WAREHOUSE_STOCK_QUERY = /* GraphQL */ `
+export const VARIANT_WAREHOUSE_STOCK_QUERY = `#graphql
 query VariantWarehouseStock($id: ID!) {
   productVariant(id: $id) {
     title
@@ -51,9 +51,9 @@ query VariantWarehouseStock($id: ID!) {
   }
 }`;
 
-export const SEARCH_BIN_LOCATIONS_QUERY = /* GraphQL */ `
-query SearchBinLocations($query: String!) {
-  metaobjects(type: "bin_location", first: 10, query: $query) {
+export const FETCH_BIN_LOCATIONS_QUERY = `#graphql
+query FetchBinLocations {
+  metaobjects(type: "bin_location", first: 200) {
     nodes {
       id
       handle
@@ -65,7 +65,7 @@ query SearchBinLocations($query: String!) {
   }
 }`;
 
-export const STAFF_MEMBER_QUERY = /* GraphQL */ `
+export const STAFF_MEMBER_QUERY = `#graphql
 query StaffMember($id: ID!) {
   staffMember(id: $id) {
     name

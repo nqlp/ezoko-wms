@@ -14,7 +14,6 @@ interface BinLocationTableProps {
     stockLocation: StockLocation[];
     selectedBins: string[];
     onBinSelectionChange: (bins: string[]) => void;
-    moveQty: number;
     selectionDisabled?: boolean;
 }
 

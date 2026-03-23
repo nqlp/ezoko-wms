@@ -9,11 +9,6 @@ export async function GET(request: Request) {
     const session = await requireShopifySession(request, { csrf: false });
     const url = new URL(request.url);
     const sku = url.searchParams.get("sku") ?? "";
-
-    if (!sku.trim()) {
-      throw new ApiError(400, "SKU is required");
-    }
-
     const matches = await validateSku(session, sku);
 
     return NextResponse.json({

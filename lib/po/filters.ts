@@ -1,45 +1,20 @@
-import { ApiError } from '@/lib/http';
 import type { Prisma } from '@prisma/client';
 import type { AuthenticatedSession } from '@/lib/auth/session-token';
 import type { PurchaseOrderListFilters } from '@/lib/validation/po';
+import { dateRangeFilter } from '@/lib/utils/prisma-filters';
 
 export type SortBy = NonNullable<PurchaseOrderListFilters["sortBy"]>;
 
-export function parseDate(value: string | null | undefined, options: { endOfDay?: boolean } = {}): Date | null {
-    if (!value) {
-        return null;
-    }
-
-    const isDateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
-    const parsed = new Date(isDateOnly ? `${value}T00:00:00.000Z` : value);
-    if (Number.isNaN(parsed.getTime())) {
-        throw new ApiError(400, `Invalid date value: ${value}`);
-    }
-
-    if (options.endOfDay && isDateOnly) {
-        parsed.setUTCHours(23, 59, 59, 999);
-    }
-
-    return parsed;
-}
-
-export function applyDateRange(
+function applyDateRange(
     where: Prisma.PoHeaderWhereInput,
     field: "expectedDate" | "createdAt",
     startValue?: string,
     endValue?: string
 ) {
-    const start = parseDate(startValue);
-    const end = parseDate(endValue, { endOfDay: field === "createdAt" });
-
-    if (!start && !end) {
-        return;
+    const clause = dateRangeFilter(startValue, endValue, { endOfDay: field === "createdAt" });
+    if (clause) {
+        where[field] = clause;
     }
-
-    where[field] = {
-        ...(start ? { gte: start } : {}),
-        ...(end ? { lte: end } : {})
-    };
 }
 
 export function applyFilters(session: AuthenticatedSession, filters: PurchaseOrderListFilters): Prisma.PoHeaderWhereInput {

@@ -1,22 +1,21 @@
 "use server";
 
-import { ProductsApi } from "@/lib/shopify/productsApi";
-import { ShopifyClient } from "@/lib/shopify/client";
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { UpdateStockResult } from "@/lib/types/ApiResponse";
-import { updateMetaobjectQty } from "@/lib/shopify/operations";
+import { updateMetaobjectQty } from "@/lib/shopify/offlineApi";
+import { handleServerActionError } from "@/lib/server-action-utils";
+
 export async function UpdateBinQtyByID(
     id: string,
     newQty: number,
     accessToken?: string
-    ):
-    Promise<ApiResponse<UpdateStockResult>> {
+): Promise<ApiResponse<UpdateStockResult>> {
     try {
-
         const result = await updateMetaobjectQty(id, newQty.toString(), accessToken);
-        const updatePayload = result.metaobjectUpdate;
-        const metaobject = updatePayload.metaobject;
-        const error = updatePayload.userErrors[0]?.message;
+        
+        const updatePayload = result?.metaobjectUpdate;
+        const metaobject = updatePayload?.metaobject;
+        const error = updatePayload?.userErrors?.[0]?.message;
 
         if (!metaobject || error) {
             return {
@@ -34,11 +33,6 @@ export async function UpdateBinQtyByID(
             },
         };
     } catch (error) {
-        console.error("Error updating bin quantity:", error);
-        return {
-            success: false,
-            message: error instanceof Error ? error.message : "Failed to update bin quantity",
-        };
+        return handleServerActionError(error, "Error updating bin quantity");
     }
 }
-

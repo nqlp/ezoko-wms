@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { apiFetch } from "@/lib/client/api";
 import { useEmbeddedBootstrap } from "@/lib/client/hooks";
@@ -9,8 +9,51 @@ import { EMPTY_FILTERS, FiltersState, SortBy, SortDirection, toQueryParams } fro
 import { canCheckIn } from '@/lib/po/params';
 import type { PoHeaderStatus } from "@/lib/constants";
 
+interface UserPrefsResponse {
+    filters: {
+        status?: string | null;
+        vendor?: string | null;
+        poNumber?: string | null;
+        expectedDateStart?: string | null;
+        expectedDateEnd?: string | null;
+        createdAtStart?: string | null;
+        createdAtEnd?: string | null;
+        importType?: string | null;
+        importDuties?: boolean | null;
+        hasNotes?: boolean | null;
+        sku?: string | null;
+    } | null;
+    sorting: {
+        sortBy?: string | null;
+        sortDirection?: string | null;
+    } | null;
+}
+
+function mapPrefsToFilters(prefs: UserPrefsResponse["filters"]): FiltersState {
+    if (!prefs) {
+        return {
+            ...EMPTY_FILTERS
+        };
+    }
+    return {
+        status: prefs.status ?? "",
+        vendor: prefs.vendor ?? "",
+        expectedDateStart: prefs.expectedDateStart ?? "",
+        expectedDateEnd: prefs.expectedDateEnd ?? "",
+        createdAtStart: prefs.createdAtStart ?? "",
+        createdAtEnd: prefs.createdAtEnd ?? "",
+        importDuties: prefs.importDuties === true ? "true" : prefs.importDuties === false ? "false" : "",
+        importType: prefs.importType ?? "",
+        hasNotes: prefs.hasNotes === true ? "true" : prefs.hasNotes === false ? "false" : "",
+        poNumber: prefs.poNumber ?? "",
+        sku: prefs.sku ?? ""
+    };
+}
+
+
 export default function usePurchaseOrderList() {
     const bootstrap = useEmbeddedBootstrap();
+    const searchParams = useSearchParams();
     const [vendors, setVendors] = useState<string[]>([]);
     const [filters, setFilters] = useState<FiltersState>(EMPTY_FILTERS);
     const [sortBy, setSortBy] = useState<SortBy>("createdAt");
@@ -20,164 +63,113 @@ export default function usePurchaseOrderList() {
     const [error, setError] = useState<string | null>(null);
     const [inlineErrors, setInlineErrors] = useState<Record<string, string>>({});
     const [initialized, setInitialized] = useState(false);
-    const searchParams = useSearchParams();
-    const createdPoNumberRow = searchParams.get("createdPoNumber")?.trim() ?? "";
-    const createdPoNumber = /^\d+$/.test(createdPoNumberRow) ? createdPoNumberRow : "";
     const [createSuccessMessage, setCreateSuccessMessage] = useState<string | null>(null);
 
-    async function loadRows(nextFilters = filters, nextSortBy = sortBy, nextSortDirection = sortDirection) {
+    const filtersRef = useRef(filters);
+    filtersRef.current = filters;
+    const sortByRef = useRef(sortBy);
+    sortByRef.current = sortBy;
+    const sortDirectionRef = useRef(sortDirection);
+    sortDirectionRef.current = sortDirection;
+
+    const loadRows = useCallback(async (
+        nextFilters = filtersRef.current,
+        nextSortBy = sortByRef.current,
+        nextSortDirection = sortDirectionRef.current
+    ) => {
+        if (bootstrap.loading || bootstrap.error) return;
+
         try {
             setLoading(true);
             setError(null);
             const query = toQueryParams(nextFilters, nextSortBy, nextSortDirection);
-            const response = await apiFetch<{ purchaseOrders: PurchaseOrderTableRow[] }>(`/api/purchase-orders?${query}`);
+            const response = await apiFetch<{ purchaseOrders: PurchaseOrderTableRow[] }>(
+                `/api/purchase-orders?${query}`
+            );
             setRows(response.purchaseOrders);
         } catch (error) {
-            console.error("Failed to load purchase orders", error);
             setError(error instanceof Error ? error.message : "Failed to load purchase orders");
         } finally {
             setLoading(false);
         }
-    }
+    }, [bootstrap.loading, bootstrap.error]);
 
     useEffect(() => {
-        if (bootstrap.loading || bootstrap.error || initialized) {
-            return;
-        }
+        if (bootstrap.loading || bootstrap.error || initialized) return;
 
         let mounted = true;
 
         (async () => {
             try {
                 const [prefsResponse, vendorsResponse] = await Promise.all([
-                    apiFetch<{ filters: Record<string, unknown> | null; sorting: Record<string, unknown> | null }>("/api/user-prefs"),
+                    apiFetch<UserPrefsResponse>("/api/user-prefs"),
                     apiFetch<{ vendors: string[] }>("/api/shopify/vendors")
                 ]);
 
-                if (!mounted) {
-                    return;
-                }
+                if (!mounted) return;
 
                 setVendors(vendorsResponse.vendors);
 
-                if (createdPoNumber) {
-                    const forcedFilters: FiltersState = { ...EMPTY_FILTERS, poNumber: createdPoNumber };
-                    const forcedSortBy: SortBy = "createdAt";
-                    const forcedSortDirection: SortDirection = "desc";
-                    setFilters(forcedFilters);
-                    setSortBy(forcedSortBy);
-                    setSortDirection(forcedSortDirection);
-                    setCreateSuccessMessage(`Purchase order ${createdPoNumber} created successfully`);
-                    const forcedQuery = toQueryParams(forcedFilters, forcedSortBy, forcedSortDirection);
-                    const forcedResponse = await apiFetch<{ purchaseOrders: PurchaseOrderTableRow[] }>(
-                        `/api/purchase-orders?${forcedQuery}`
-                    );
-                    setRows(forcedResponse.purchaseOrders);
-                    return;
+                let initialFilters = mapPrefsToFilters(prefsResponse.filters);
+                let initialSortBy = (prefsResponse.sorting?.sortBy as SortBy) || "createdAt";
+                let initialSortDir = (prefsResponse.sorting?.sortDirection as SortDirection) || "desc";
+
+                const createdPoFromUrl = searchParams.get("createdPoNumber")?.trim();
+                if (createdPoFromUrl && /^\d+$/.test(createdPoFromUrl)) {
+                    initialFilters = { ...EMPTY_FILTERS, poNumber: createdPoFromUrl };
+                    initialSortBy = "createdAt";
+                    initialSortDir = "desc";
+                    setCreateSuccessMessage(`Purchase order ${createdPoFromUrl} created successfully`);
+                } else {
+                    setCreateSuccessMessage(null);
                 }
 
-                const prefFilters = prefsResponse.filters ?? {};
-                const mergedFilters: FiltersState = {
-                    status: String(prefFilters.status ?? ""),
-                    vendor: String(prefFilters.vendor ?? ""),
-                    expectedDateStart: String(prefFilters.expectedDateStart ?? ""),
-                    expectedDateEnd: String(prefFilters.expectedDateEnd ?? ""),
-                    createdAtStart: String(prefFilters.createdAtStart ?? ""),
-                    createdAtEnd: String(prefFilters.createdAtEnd ?? ""),
-                    importDuties:
-                        prefFilters.importDuties == null
-                            ? ""
-                            : Boolean(prefFilters.importDuties)
-                                ? "true"
-                                : "false",
-                    importType: String(prefFilters.importType ?? ""),
-                    hasNotes:
-                        prefFilters.hasNotes == null
-                            ? ""
-                            : Boolean(prefFilters.hasNotes)
-                                ? "true"
-                                : "false",
-                    poNumber: String(prefFilters.poNumber ?? ""),
-                    sku: String(prefFilters.sku ?? "")
-                };
+                setFilters(initialFilters);
+                setSortBy(initialSortBy);
+                setSortDirection(initialSortDir);
 
-                const prefSorting = prefsResponse.sorting ?? {};
-                const nextSortBy = (prefSorting.sortBy as SortBy) || "createdAt";
-                const nextSortDirection = (prefSorting.sortDirection as SortDirection) || "desc";
+                await loadRows(initialFilters, initialSortBy, initialSortDir);
 
-                setCreateSuccessMessage(null);
-                setFilters(mergedFilters);
-                setSortBy(nextSortBy);
-                setSortDirection(nextSortDirection);
-
-                const query = toQueryParams(mergedFilters, nextSortBy, nextSortDirection);
-                const response = await apiFetch<{ purchaseOrders: PurchaseOrderTableRow[] }>(
-                    `/api/purchase-orders?${query}`
-                );
-                setRows(response.purchaseOrders);
-            } catch (error) {
-                if (mounted) {
-                    setError(error instanceof Error ? error.message : "Initialization failed");
-                }
+            } catch (err) {
+                if (mounted) setError(err instanceof Error ? err.message : "Initialization failed");
             } finally {
-                if (mounted) {
-                    setInitialized(true);
-                }
+                if (mounted) setInitialized(true);
             }
         })();
 
-        return () => {
-            mounted = false;
-        };
-    }, [bootstrap.error, bootstrap.loading, initialized, createdPoNumber]);
+        return () => { mounted = false; };
+    }, [bootstrap.error, bootstrap.loading, initialized, searchParams, loadRows]);
 
-    const hasActiveFilters = useMemo(
-        () => Object.values(filters).some((value) => value !== ""),
-        [filters]
-    );
+    const hasActiveFilters = useMemo(() => {
+        return (Object.keys(filters) as Array<keyof FiltersState>).some(
+            (key) => filters[key] !== EMPTY_FILTERS[key]
+        );
+    }, [filters]);
 
-    async function savePreferences(
-        nextFilters = filters,
-        nextSortBy = sortBy,
-        nextSortDirection = sortDirection
-    ) {
-        if (!bootstrap.csrfToken) {
-            return;
-        }
+    async function savePreferences(f = filters, s = sortBy, d = sortDirection) {
+        if (!bootstrap.csrfToken) return;
 
         await apiFetch("/api/user-prefs", {
             method: "PUT",
             csrfToken: bootstrap.csrfToken,
             body: JSON.stringify({
                 filters: {
-                    status: nextFilters.status || null,
-                    vendor: nextFilters.vendor || null,
-                    poNumber: nextFilters.poNumber || null,
-                    expectedDateStart: nextFilters.expectedDateStart || null,
-                    expectedDateEnd: nextFilters.expectedDateEnd || null,
-                    createdAtStart: nextFilters.createdAtStart || null,
-                    createdAtEnd: nextFilters.createdAtEnd || null,
-                    importType: nextFilters.importType || null,
-                    importDuties: nextFilters.importDuties ? nextFilters.importDuties === "true" : null,
-                    hasNotes: nextFilters.hasNotes ? nextFilters.hasNotes === "true" : null
+                    ...f,
+                    importDuties: f.importDuties === "" ? null : f.importDuties === "true",
+                    hasNotes: f.hasNotes === "" ? null : f.hasNotes === "true",
                 },
-                sorting: {
-                    sortBy: nextSortBy,
-                    sortDirection: nextSortDirection
-                }
+                sorting: { sortBy: s, sortDirection: d }
             })
         });
     }
 
     async function runCheckIn(poNumber: string, status: string) {
-        if (!bootstrap.csrfToken) {
-            return;
-        }
+        if (!bootstrap.csrfToken) return;
 
         if (!canCheckIn(status as PoHeaderStatus)) {
-            setInlineErrors((prev) => ({
+            setInlineErrors(prev => ({
                 ...prev,
-                [poNumber]: "Check-in is only allowed for OPEN purchase orders"
+                [poNumber]: "Check-in only allowed for OPEN POs"
             }));
             return;
         }
@@ -187,11 +179,13 @@ export default function usePurchaseOrderList() {
                 method: "POST",
                 csrfToken: bootstrap.csrfToken
             });
-            setInlineErrors((prev) => ({ ...prev, [poNumber]: "" }));
+            setInlineErrors(prev => ({
+                ...prev,
+                [poNumber]: ""
+            }));
             await loadRows();
         } catch (error) {
-            console.error("Check-in failed for PO", poNumber, error);
-            setInlineErrors((prev) => ({
+            setInlineErrors(prev => ({
                 ...prev,
                 [poNumber]: error instanceof Error ? error.message : "Check-in failed"
             }));
@@ -207,11 +201,8 @@ export default function usePurchaseOrderList() {
     }
 
     return {
-        // bootstrap state (needed for loading/error guards in the page)
         bootstrapLoading: bootstrap.loading,
         bootstrapError: bootstrap.error,
-
-        // data
         rows,
         vendors,
         filters,
@@ -223,13 +214,9 @@ export default function usePurchaseOrderList() {
         inlineErrors,
         createSuccessMessage,
         hasActiveFilters,
-
-        // setters
         setFilters,
         setSortBy,
         setSortDirection,
-
-        // actions
         loadRows,
         savePreferences,
         runCheckIn,

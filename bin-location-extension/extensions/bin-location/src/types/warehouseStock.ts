@@ -1,4 +1,5 @@
 export { StockItem, BinLocation, MetaobjectField, MetaobjectFieldReference, MetaobjectFieldWithReference, MetaobjectNode } from '@shared/types/index';
+import type { MetaobjectNode } from '@shared/types/index';
 
 export interface WarehouseStockMetafieldNode {
   id: string;
@@ -32,8 +33,3 @@ export interface WarehouseStockResponse {
   } | null;
 }
 
-export interface StaffMemberResponse {
-  staffMember: {
-    name?: string | null;
-  } | null;
-}

@@ -12,7 +12,7 @@ export interface InventorySetResponse {
     };
 }
 
-export interface SearchBinLocationsResponse {
+export interface FetchBinLocationsResponse {
     metaobjects: {
         nodes: {
             id: string;

@@ -11,24 +11,14 @@ import MenuItem from "@mui/material/MenuItem";
 import Alert from "@mui/material/Alert";
 import { useState } from "react";
 import { requestScanRefocus } from "./scanner/focusBus";
+import { useLogout } from "@/lib/client/hooks/useLogout";
+import { getAvatarInitials } from "@/lib/auth/utils";
 
 interface AppBarProps {
     title: string;
     onMenuClick: () => void;
     shopifyUserName?: string | null;
     shopifyUserEmail?: string | null;
-}
-
-function getAvatarInitials(shopifyName?: string | null, shopifyEmail?: string | null): string {
-    const trimmedName = shopifyName?.trim();
-    if (trimmedName) {
-        const parts = trimmedName.split(/\s+/);
-        const firstInitial = parts[0][0] || "";
-        const secondInitial = parts[parts.length - 1][0] || "";
-        return `${firstInitial}${secondInitial}`.toUpperCase();
-    }
-
-    return shopifyEmail?.[0]?.toUpperCase() ?? "?";
 }
 
 export default function WmsAppBar({
@@ -38,10 +28,8 @@ export default function WmsAppBar({
     shopifyUserEmail,
 }: AppBarProps) {
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-    const [isLoggingOut, setIsLoggingOut] = useState(false);
-    const [logoutError, setLogoutError] = useState<string | null>(null);
     const open = Boolean(anchorEl);
-
+    const { logout, isLoggingOut, logoutError } = useLogout();
     const handleAvatarClick = (event: React.MouseEvent<HTMLElement>) => {
         setAnchorEl(event.currentTarget);
     };
@@ -51,69 +39,11 @@ export default function WmsAppBar({
         requestScanRefocus("avatar-menu-close");
     };
 
-    const handleMenuClick = () => {
-        onMenuClick();
-    };
-
-    const handleLogout = async () => {
-        if (isLoggingOut) {
-            return;
-        }
-
+    const onLogoutClick = async () => {
         handleClose();
-        setLogoutError(null);
-        setIsLoggingOut(true);
-
-        try {
-            const response = await fetch("/api/auth/logout", {
-                method: "POST",
-                credentials: "include",
-                cache: "no-store",
-            });
-
-            if (!response.ok) {
-                let message = "Unable to log out. Please try again.";
-
-                try {
-                    const errorPayload = (await response.json()) as { message?: string };
-                    if (errorPayload.message) {
-                        message = errorPayload.message;
-                    }
-                } catch (error) {
-                    console.warn("[Logout] Failed to parse error message from /api/auth/logout", error);
-                }
-
-                setLogoutError(`${message} Redirecting...`);
-                window.location.assign("/api/auth/logout");
-                return;
-            }
-
-            let logoutUrl: string | null = null;
-            try {
-                const payload = (await response.json()) as { logoutUrl?: string };
-                if (payload.logoutUrl) {
-                    logoutUrl = payload.logoutUrl;
-                }
-            } catch (error) {
-                console.warn("[Logout] Failed to parse logout URL from /api/auth/logout", error);
-            }
-
-            if (!logoutUrl) {
-                window.location.assign("/api/auth/logout");
-                return;
-            }
-
-            window.location.assign(logoutUrl);
-        } catch (error) {
-            console.error("[Logout] Failed to log out from client:", error);
-            setLogoutError("Unable to log out. Redirecting...");
-            window.location.assign("/api/auth/logout");
-        } finally {
-            setIsLoggingOut(false);
-        }
+        await logout();
     };
 
-    const initials = getAvatarInitials(shopifyUserName, shopifyUserEmail);
     return (
         <>
             <AppBar
@@ -125,7 +55,7 @@ export default function WmsAppBar({
                 }}
             >
                 <Toolbar>
-                    <IconButton edge="start" color="inherit" aria-label="menu" onClick={handleMenuClick}>
+                    <IconButton edge="start" color="inherit" aria-label="menu" onClick={onMenuClick}>
                         <MenuIcon />
                     </IconButton>
 
@@ -138,10 +68,10 @@ export default function WmsAppBar({
                         aria-label="account avatar"
                         onClick={handleAvatarClick}
                     >
-                        {initials}
+                        {getAvatarInitials(shopifyUserName, shopifyUserEmail)}
                     </Avatar>
                     <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
-                        <MenuItem onClick={handleLogout} disabled={isLoggingOut}>
+                        <MenuItem onClick={onLogoutClick} disabled={isLoggingOut}>
                             {isLoggingOut ? "Logging out..." : "Log out"}
                         </MenuItem>
                     </Menu>

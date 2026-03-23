@@ -1,7 +1,11 @@
 "use client";
 
 import { useCallback } from "react";
-import { apiFetch } from "@/lib/client/api";
+import {
+    searchProducts as apiSearchProducts,
+    searchVariants as apiSearchVariants,
+    fetchProductVariants,
+} from "@/lib/client/shopifyProductApi";
 import type { ProductOption, VariantOption } from "../po-form.types";
 import type { FormAction } from "@/components/embedded/usePurchaseOrderForm";
 
@@ -23,10 +27,8 @@ export function useProductSearch(params: {
         }
 
         try {
-            const payload = await apiFetch<{ products: ProductOption[] }>(
-                `/api/shopify/products/search?q=${encodeURIComponent(query)}`
-            );
-            dispatch({ type: "SET_PRODUCT_SUGGESTIONS", rowId, products: payload.products });
+            const products = await apiSearchProducts(query);
+            dispatch({ type: "SET_PRODUCT_SUGGESTIONS", rowId, products });
             dispatch({ type: "SET_ACTIVE_PRODUCT_POPOVER", rowId });
         } catch {
             dispatch({ type: "SET_PRODUCT_SUGGESTIONS", rowId, products: [] });
@@ -42,10 +44,8 @@ export function useProductSearch(params: {
         }
 
         try {
-            const payload = await apiFetch<{ variants: VariantOption[] }>(
-                `/api/shopify/variants/search?q=${encodeURIComponent(query)}`
-            );
-            dispatch({ type: "SET_VARIANT_SEARCH_RESULTS", rowId, variants: payload.variants });
+            const variants = await apiSearchVariants(query);
+            dispatch({ type: "SET_VARIANT_SEARCH_RESULTS", rowId, variants });
             dispatch({ type: "SET_ACTIVE_VARIANT_POPOVER", rowId });
         } catch {
             dispatch({ type: "SET_VARIANT_SEARCH_RESULTS", rowId, variants: [] });
@@ -70,10 +70,8 @@ export function useProductSearch(params: {
         dispatch({ type: "CLEAR_POPOVER_IF_MATCH", rowId, target: "product" });
 
         try {
-            const payload = await apiFetch<{ variants: VariantOption[] }>(
-                `/api/shopify/products/${encodeURIComponent(product.id)}/variants`
-            );
-            dispatch({ type: "SET_VARIANT_SUGGESTIONS", rowId, variants: payload.variants });
+            const variants = await fetchProductVariants(product.id);
+            dispatch({ type: "SET_VARIANT_SUGGESTIONS", rowId, variants });
         } catch {
             dispatch({ type: "SET_VARIANT_SUGGESTIONS", rowId, variants: product.variants ?? [] });
         }

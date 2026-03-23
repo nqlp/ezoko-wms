@@ -1,1 +1,0 @@
-export { METAOBJECT_UPDATE_MUTATION } from "@shared/graphql/mutations";

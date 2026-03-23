@@ -2,34 +2,8 @@
 
 import { LogRow } from "@/lib/logs/service";
 import './PurchaseOrderTable.css';
-
-type ChipTone = "info" | "warning" | "success" | "critical" | "auto";
-
-const activityTone: Record<string, ChipTone> = {
-    MOVEMENT: "info",
-    CORRECTION: "warning",
-    GOODS_RECEIPT: "success",
-    PUTAWAY: "info",
-    PICKING: "auto",
-    GOODS_ISSUE: "critical",
-    INV_COUNTING: "auto",
-};
-
-function activityClass(activity: string): string {
-    const tone = activityTone[activity] ?? "auto";
-    return `activity-chip activity-${tone}`;
-}
-
-function formatDate(iso: string) {
-    return new Date(iso.toString()).toLocaleString("en-CA", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-    });
-}
+import { formatDateTime } from "@/lib/utils/date";
+import { ActivityChip } from "./ActivityChip";
 
 export default function StockMovementsTable({ logs }: { logs: LogRow[] }) {
     return (
@@ -50,11 +24,9 @@ export default function StockMovementsTable({ logs }: { logs: LogRow[] }) {
                 <s-table-body>
                     {logs.map((log) => (
                         <s-table-row key={log.id} hover>
-                            <s-table-cell>{formatDate(log.createdAt)}</s-table-cell>
+                            <s-table-cell>{formatDateTime(log.createdAt)}</s-table-cell>
                             <s-table-cell>
-                                <span className={activityClass(log.activity)}>
-                                    {log.activity}
-                                </span>
+                                <ActivityChip activity={log.activity} />
                             </s-table-cell>
                             <s-table-cell>{log.user ?? "—"}</s-table-cell>
                             <s-table-cell>{log.barcode ?? "—"}</s-table-cell>

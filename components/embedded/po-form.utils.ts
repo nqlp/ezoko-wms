@@ -1,4 +1,3 @@
-import type { FormLine } from '@/components/embedded/po-form.types';
 
 export function lineId(): string {
     return Math.random().toString(36).slice(2, 12);
@@ -74,4 +73,21 @@ export function eventValues(event: unknown): string[] {
     }
 
     return [];
+}
+
+import type { ValidatedCsvRow } from "@/lib/po/item-import/types";
+import type { FormLine } from '@/components/embedded/po-form.types';
+
+export function createFormLinesFromValidRows(rows: ValidatedCsvRow[]): FormLine[] {
+    return rows.map((row) => ({
+        rowId: lineId(),
+        sku: row.sku,
+        productId: null,
+        variantId: null,
+        productTitle: row.productTitle,
+        variantTitle: row.variantTitle,
+        orderQty: String(row.orderQty),
+        unitCost: row.unitCost != null ? String(row.unitCost) : "",
+        skuError: null,
+    }));
 }

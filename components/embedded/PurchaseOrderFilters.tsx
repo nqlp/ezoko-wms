@@ -1,7 +1,19 @@
 "use client";
 
-import { IMPORT_TYPES, PO_HEADER_STATUS } from '@/lib/constants';
-import { FiltersState, SortBy, SortDirection, getControlValue } from './purchase-order-list-types';
+import {
+    IMPORT_TYPES,
+    PO_HEADER_STATUS,
+    STATUS_LABELS,
+    PO_SORT_BY_OPTIONS,
+    IMPORT_DUTIES_OPTIONS,
+    SORT_DIRECTION_OPTIONS
+} from '@/lib/constants';
+import {
+    FiltersState,
+    SortBy,
+    SortDirection,
+    getControlValue
+} from './purchase-order-list-types';
 
 interface PurchaseOrderFiltersProps {
     filters: FiltersState;
@@ -18,25 +30,6 @@ interface PurchaseOrderFiltersProps {
     onSaveDefaults: () => void;
 }
 
-const importDutiesOptions: Array<{ value: FiltersState["importDuties"]; label: string }> = [
-    { value: "", label: "All" },
-    { value: "true", label: "Yes" },
-    { value: "false", label: "No" }
-];
-
-const sortByOptions: { value: SortBy; label: string }[] = [
-    { value: "poNumber", label: "PO Number" },
-    { value: "createdAt", label: "Creation date" },
-    { value: "expectedDate", label: "Expected date" },
-    { value: "status", label: "Status" },
-    { value: "vendor", label: "Vendor" }
-];
-
-const sortDirectionOptions: { value: SortDirection; label: string }[] = [
-    { value: "asc", label: "Ascending" },
-    { value: "desc", label: "Descending" }
-];
-
 export function PurchaseOrderFilters({
     filters,
     sortBy,
@@ -52,11 +45,6 @@ export function PurchaseOrderFilters({
     onSaveDefaults,
 }: PurchaseOrderFiltersProps) {
 
-    const statusOptions = PO_HEADER_STATUS.map((status) => (
-        <s-option key={status} value={status}>
-            {status}
-        </s-option>
-    ));
 
     const vendorOptions = vendors.map((vendor) => (
         <s-option key={vendor} value={vendor}>
@@ -83,7 +71,11 @@ export function PurchaseOrderFilters({
                             }
                         >
                             <s-option value="">All</s-option>
-                            {statusOptions}
+                            {PO_HEADER_STATUS.map((status) => (
+                                <s-option key={status} value={status}>
+                                    {STATUS_LABELS[status]}
+                                </s-option>
+                            ))}
                         </s-select>
                     </s-grid-item>
 
@@ -111,7 +103,7 @@ export function PurchaseOrderFilters({
                                 })
                             }
                         >
-                            {importDutiesOptions.map((option) => (
+                            {IMPORT_DUTIES_OPTIONS.map((option) => (
                                 <s-option key={option.label} value={option.value}>
                                     {option.label}
                                 </s-option>
@@ -222,7 +214,7 @@ export function PurchaseOrderFilters({
                             value={sortBy}
                             onChange={(event: Event) => onSortByChange(getControlValue(event) as SortBy)}
                         >
-                            {sortByOptions.map((option) => (
+                            {PO_SORT_BY_OPTIONS.map((option) => (
                                 <s-option key={option.value} value={option.value}>
                                     {option.label}
                                 </s-option>
@@ -238,7 +230,7 @@ export function PurchaseOrderFilters({
                                 onSortDirectionChange(getControlValue(event) as SortDirection)
                             }
                         >
-                            {sortDirectionOptions.map((option) => (
+                            {SORT_DIRECTION_OPTIONS.map((option) => (
                                 <s-option key={option.value} value={option.value}>
                                     {option.label}
                                 </s-option>

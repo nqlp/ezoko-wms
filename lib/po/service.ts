@@ -9,7 +9,8 @@ import type {
   UpdatePurchaseOrderInput,
   PurchaseOrderListFilters,
 } from '@/lib/validation/po';
-import { parseDate, applyFilters, SORT_COLUMN_MAP, type SortBy } from '@/lib/po/filters';
+import { applyFilters, SORT_COLUMN_MAP, type SortBy } from '@/lib/po/filters';
+import { parseDate } from '@/lib/utils/prisma-filters';
 import { parseNullableText, serializePurchaseOrder, toItemCreateInput } from './transformers';
 import { canCheckIn, isReadOnly } from '@/lib/po/params';
 import { PoHeaderStatus } from '../constants';

@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getVariantByBarcode } from "./actions/getVariantByBarcode";
+import { getVariantByBarcode } from "../features/inventory/actions/getVariantByBarcode";
 import VariantCard from "./scan/_components/VariantCard";
 import StockTable from "./scan/_components/StockTable";
 import { StockLocation } from "@/lib/types/StockLocation";
 import { ProductVariant } from "@/lib/types/ProductVariant";
-import { saveInventoryChanges } from "./actions/saveInventoryChanges";
+import { saveInventoryChanges } from "../features/inventory/actions/saveInventoryChanges";
 import { incrementQty, decrementQty } from "@/lib/stockHelpers";
 
 export default function Page() {

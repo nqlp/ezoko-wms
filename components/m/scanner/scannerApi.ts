@@ -1,5 +1,5 @@
-import { getVariantByBarcode } from "@/app/actions/getVariantByBarcode";
-import { moveStockBetweenBins } from "@/app/actions/moveStockBetweenBins";
+import { getVariantByBarcode } from "@/features/inventory/actions/getVariantByBarcode";
+import { moveStockBetweenBins } from "@/features/inventory/actions/moveStockBetweenBins";
 import { ApiResponse } from "@/lib/types/ApiResponse";
 import { ProductVariant } from "@/lib/types/ProductVariant";
 import type { MovementActivity } from "./scannerTypes";
