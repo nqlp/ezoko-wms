@@ -81,7 +81,7 @@ export function useBinLocationSearch(
             setSearching(true);
             try {
                 const response = await query<SearchBinLocationsResponse>(SEARCH_BIN_LOCATIONS_QUERY, {
-                    variables: { query: searchQuery }
+                    variables: { query: `title:${searchQuery}` }
                 });
 
                 const nodes = response?.data.metaobjects.nodes || [];
