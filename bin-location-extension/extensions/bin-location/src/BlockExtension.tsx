@@ -71,7 +71,7 @@ function Extension() {
     setError("");
     setValidationError("");
     try {
-      const { updatedItems } = await saveStock({
+      const { updatedItems, logWarnings } = await saveStock({
         items,
         initialQtyById,
         isAdding,
@@ -89,6 +89,10 @@ function Extension() {
 
       setItems(updatedItems);
       setInitialQtyById(Object.fromEntries(updatedItems.map(i => [i.id, i.qty])));
+
+      if (logWarnings.length > 0) {
+        setError(`Qty saved, but WMS log failed: ${logWarnings[0]}`);
+      }
       setFormKey((prev) => prev + 1);
 
       if (isAdding) {

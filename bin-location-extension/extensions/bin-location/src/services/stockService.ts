@@ -36,6 +36,7 @@ export interface SaveStockParams {
 
 export interface SaveStockResult {
     updatedItems: StockItem[];
+    logWarnings: string[];
 }
 
 async function getUserFirstName(query: ShopifyQueryFct, token: string | null | undefined): Promise<string | null> {
@@ -75,7 +76,8 @@ async function updateDirtyItems(
     initialQtyById: Record<string, number>,
     query: ShopifyQueryFct,
     logContext: { variantBarcode?: string | null; variantTitle?: string | null; token?: string | null; user?: string | null },
-): Promise<void> {
+): Promise<string[]> {
+    const warnings: string[] = [];
     const dirtyItems = items.filter(
         (item) => item.qty !== (initialQtyById[item.id] ?? item.qty)
     );
@@ -88,7 +90,7 @@ async function updateDirtyItems(
             },
         });
         validateResponse<UpdateStockResponse>(result, data => data?.metaobjectUpdate?.userErrors);
-        await logCorrectionActivity({
+        const logResult = await logCorrectionActivity({
             barcode: logContext.variantBarcode,
             variantTitle: logContext.variantTitle,
             destinationLocation: item.bin,
@@ -96,7 +98,12 @@ async function updateDirtyItems(
             token: logContext.token,
             user: logContext.user,
         });
+        if (!logResult.success) {
+            warnings.push(logResult.error ?? "Failed to log correction");
+        }
     }));
+
+    return warnings;
 }
 
 /**
@@ -127,8 +134,11 @@ export async function saveStock(params: SaveStockParams): Promise<SaveStockResul
         user: userFirstName
     };
 
+    const logWarnings: string[] = [];
+
     // 1. Persist changed quantities
-    await updateDirtyItems(items, initialQtyById, query, logContext);
+    const dirtyWarnings = await updateDirtyItems(items, initialQtyById, query, logContext);
+    logWarnings.push(...dirtyWarnings);
 
     const nextItems = [...items];
 
@@ -142,7 +152,8 @@ export async function saveStock(params: SaveStockParams): Promise<SaveStockResul
 
         const existingStockIndex = nextItems.findIndex((i) => i.binLocationId === validatedBin.id);
         if (existingStockIndex >= 0) {
-            await updateExistingBinQty(query, nextItems, existingStockIndex, qtyNum, logContext);
+            const addWarning = await updateExistingBinQty(query, nextItems, existingStockIndex, qtyNum, logContext);
+            if (addWarning) logWarnings.push(addWarning);
         } else {
             throw new Error(`This bin location: "${draftQuery.trim()}" is not yet linked to this variant.`);
         }
@@ -153,7 +164,7 @@ export async function saveStock(params: SaveStockParams): Promise<SaveStockResul
         await syncInventory(query, nextItems, inventoryItemId, locationId);
     }
 
-    return { updatedItems: nextItems };
+    return { updatedItems: nextItems, logWarnings };
 }
 
 async function updateExistingBinQty(
@@ -167,7 +178,7 @@ async function updateExistingBinQty(
         token?: string | null;
         user?: string | null
     },
-): Promise<void> {
+): Promise<string | null> {
     const existing = items[existingStockIndex];
     const result = await query<UpdateStockResponse>(METAOBJECT_UPDATE_MUTATION, {
         variables: {
@@ -176,7 +187,7 @@ async function updateExistingBinQty(
         },
     });
     validateResponse<UpdateStockResponse>(result, data => data?.metaobjectUpdate?.userErrors);
-    await logCorrectionActivity({
+    const logResult = await logCorrectionActivity({
         barcode: logContext?.variantBarcode,
         variantTitle: logContext?.variantTitle,
         destinationLocation: existing.bin,
@@ -185,6 +196,7 @@ async function updateExistingBinQty(
         user: logContext?.user,
     });
     items[existingStockIndex] = { ...existing, qty: qtyNum };
+    return logResult.success ? null : (logResult.error ?? "Failed to log correction");
 }
 
 async function syncInventory(

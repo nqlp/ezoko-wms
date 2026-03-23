@@ -5,6 +5,16 @@ import { stockMovementLogInputSchema } from "@/lib/validation/stockMovement";
 import { listLogs } from "@/lib/logs/service";
 import { handleRouteError } from "@/lib/http";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
 export async function POST(request: NextRequest) {
   try {
     const auth = await requireBearerAuth(request);

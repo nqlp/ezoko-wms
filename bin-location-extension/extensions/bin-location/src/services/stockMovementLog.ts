@@ -47,7 +47,12 @@ function getEndpoint(): string {
  * 
  * @param input - The correction details to log
  */
-export async function logCorrectionActivity(input: CorrectionLogInput): Promise<void> {
+export interface LogResult {
+  success: boolean;
+  error?: string;
+}
+
+export async function logCorrectionActivity(input: CorrectionLogInput): Promise<LogResult> {
   const endpoint = getEndpoint();
 
   // Resolve user ID from input or token
@@ -70,7 +75,6 @@ export async function logCorrectionActivity(input: CorrectionLogInput): Promise<
   };
 
   if (input.token) {
-    // authentification header
     headers.Authorization = `Bearer ${input.token}`;
   }
 
@@ -83,11 +87,15 @@ export async function logCorrectionActivity(input: CorrectionLogInput): Promise<
 
     if (!response.ok) {
       const text = await response.text();
-      console.error(`Stock movement log failed: ${response.status}`, text);
-    } else {
-      console.log("Stock movement logged successfully");
+      const errorMsg = `Log failed (${response.status}): ${text}`;
+      console.error(errorMsg);
+      return { success: false, error: errorMsg };
     }
+
+    return { success: true };
   } catch (error) {
-    console.error("Stock movement logging failed:", error);
+    const errorMsg = error instanceof Error ? error.message : "Network error";
+    console.error("Stock movement logging failed:", errorMsg);
+    return { success: false, error: errorMsg };
   }
 }
