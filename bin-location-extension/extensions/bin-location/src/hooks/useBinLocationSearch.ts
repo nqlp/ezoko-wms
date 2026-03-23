@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
-import { SEARCH_BIN_LOCATIONS_QUERY } from '../graphql/queries';
-import { SearchBinLocationsResponse } from '../types/api';
+import { FETCH_BIN_LOCATIONS_QUERY } from '../graphql/queries';
+import { FetchBinLocationsResponse } from '../types/api';
 import { BinLocation } from '../types/warehouseStock';
 import { getFieldValue, ShopifyQueryFct } from '../utils/helpers';
 import { scoreMatch } from '../utils/search';
@@ -53,9 +53,7 @@ export function useBinLocationSearch(
         if (!searchString) {
             return null;
         }
-        const response = await query<SearchBinLocationsResponse>(SEARCH_BIN_LOCATIONS_QUERY, {
-            variables: { query: `title:${searchString}` }
-        });
+        const response = await query<FetchBinLocationsResponse>(FETCH_BIN_LOCATIONS_QUERY, {});
         const nodes = response?.data?.metaobjects?.nodes ?? [];
         const match = nodes.find(node => node.handle === searchString);
         return match ? { id: match.id, handle: match.handle, title: getFieldValue(match.fields, "bin_location") } : null;
@@ -80,9 +78,7 @@ export function useBinLocationSearch(
         const timer = setTimeout(async () => {
             setSearching(true);
             try {
-                const response = await query<SearchBinLocationsResponse>(SEARCH_BIN_LOCATIONS_QUERY, {
-                    variables: { query: `title:${searchQuery}` }
-                });
+                const response = await query<FetchBinLocationsResponse>(FETCH_BIN_LOCATIONS_QUERY, {});
 
                 const nodes = response?.data.metaobjects.nodes || [];
                 const mapped = nodes.map((node) => {

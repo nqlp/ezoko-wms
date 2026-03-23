@@ -51,9 +51,9 @@ query VariantWarehouseStock($id: ID!) {
   }
 }`;
 
-export const SEARCH_BIN_LOCATIONS_QUERY = `#graphql
-query SearchBinLocations($query: String!) {
-  metaobjects(type: "bin_location", first: 10, query: $query) {
+export const FETCH_BIN_LOCATIONS_QUERY = `#graphql
+query FetchBinLocations {
+  metaobjects(type: "bin_location", first: 200) {
     nodes {
       id
       handle
