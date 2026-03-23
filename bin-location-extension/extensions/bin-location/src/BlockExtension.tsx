@@ -6,6 +6,7 @@ import { useBinLocationSearch } from './hooks/useBinLocationSearch';
 import { StockTable } from './components/StockTable';
 import { AddBinLocationForm } from './components/AddBinLocationForm';
 import { saveStock } from './services/stockService';
+import { parseQty } from '@shared/utils/parseQty';
 
 export default async () => {
   render(<Extension />, document.body);
@@ -57,8 +58,7 @@ function Extension() {
 
   // useCallback to memoize the function
   const handleQtyChange = useCallback((id: string, newValue: string) => {
-    const parsedQty = parseInt(newValue, 10);
-    const newQty = Number.isFinite(parsedQty) ? Math.max(0, parsedQty) : 0;
+    const newQty = parseQty(newValue);
     setItems(prev => prev.map(item => (item.id === id ? { ...item, qty: newQty } : item)));
   }, [setItems]);
 

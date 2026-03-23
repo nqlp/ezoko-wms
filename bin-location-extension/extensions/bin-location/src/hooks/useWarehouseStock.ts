@@ -3,6 +3,7 @@ import { VARIANT_WAREHOUSE_STOCK_QUERY } from '../graphql/queries';
 import { MetaobjectNode, StockItem, WarehouseStockResponse } from '../types/warehouseStock';
 import { getFieldValue, ShopifyQueryFct } from '../utils/helpers';
 import { resolveBinName } from '@shared/utils/metaobject';
+import { parseQty } from '@shared/utils/parseQty';
 
 export interface UseWarehouseStockResult {
   items: StockItem[];
@@ -59,7 +60,12 @@ export function useWarehouseStock(
             const binName = resolveBinName(node.fields, binLocationRef?.handle ?? node.handle);
             const qty = getFieldValue(fields, "qty") || "0";
 
-            return { id: node.id, bin: binName, qty: parseInt(qty, 10), binLocationId: binLocationRef?.id };
+            return {
+              id: node.id,
+              bin: binName,
+              qty: parseQty(qty),
+              binLocationId: binLocationRef?.id
+            };
           });
           setItems(parsed);
           setInitialQtyById(Object.fromEntries(parsed.map(i => [i.id, i.qty])));

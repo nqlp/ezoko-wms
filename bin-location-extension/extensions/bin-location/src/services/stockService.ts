@@ -15,6 +15,7 @@ import {
     ShopifyQueryFct,
 } from '../utils/helpers';
 import { logCorrectionActivity, extractUserIdFromToken } from './stockMovementLog';
+import { validateAddBinStockInput } from '../validation/addBinStock';
 import { STAFF_MEMBER_QUERY } from '../graphql/queries';
 
 export interface SaveStockParams {
@@ -67,8 +68,40 @@ async function getUserFirstName(query: ShopifyQueryFct, token: string | null | u
 }
 
 /**
- * Save stock changes including updating existing items, creating new bin locations,
- * and syncing inventory to Shopify
+ * Persist quantity changes for items whose qty differs from the initial snapshot
+ */
+async function updateDirtyItems(
+    items: StockItem[],
+    initialQtyById: Record<string, number>,
+    query: ShopifyQueryFct,
+    logContext: { variantBarcode?: string | null; variantTitle?: string | null; token?: string | null; user?: string | null },
+): Promise<void> {
+    const dirtyItems = items.filter(
+        (item) => item.qty !== (initialQtyById[item.id] ?? item.qty)
+    );
+
+    await Promise.all(dirtyItems.map(async (item) => {
+        const result = await query<UpdateStockResponse>(METAOBJECT_UPDATE_MUTATION, {
+            variables: {
+                id: item.id,
+                fields: [{ key: "qty", value: String(item.qty) }],
+            },
+        });
+        validateResponse<UpdateStockResponse>(result, data => data?.metaobjectUpdate?.userErrors);
+        await logCorrectionActivity({
+            barcode: logContext.variantBarcode,
+            variantTitle: logContext.variantTitle,
+            destinationLocation: item.bin,
+            destinationQty: item.qty,
+            token: logContext.token,
+            user: logContext.user,
+        });
+    }));
+}
+
+/**
+ * Save stock changes: update modified quantities, add to existing bin,
+ * and sync inventory to Shopify.
  */
 export async function saveStock(params: SaveStockParams): Promise<SaveStockResult> {
     const {
@@ -86,63 +119,36 @@ export async function saveStock(params: SaveStockParams): Promise<SaveStockResul
         token,
     } = params;
 
-    // Fetch user first name once if possible
     const userFirstName = await getUserFirstName(query, token);
+    const logContext = {
+        variantBarcode,
+        variantTitle,
+        token,
+        user: userFirstName
+    };
 
-    // Update dirty items (changed quantities)
-    const dirtyItems = items.filter(
-        (item) => item.qty !== (initialQtyById[item.id] ?? item.qty)
-    );
-
-    await Promise.all(dirtyItems.map(async (item) => {
-        const result = await query<UpdateStockResponse>(METAOBJECT_UPDATE_MUTATION, {
-            variables: {
-                id: item.id,
-                fields: [{ key: "qty", value: String(item.qty) }],
-            },
-        });
-        validateResponse<UpdateStockResponse>(result, data => data?.metaobjectUpdate?.userErrors);
-        await logCorrectionActivity({
-            barcode: variantBarcode,
-            variantTitle: variantTitle,
-            destinationLocation: item.bin,
-            destinationQty: item.qty,
-            token,
-            user: userFirstName
-        });
-    }));
+    // 1. Persist changed quantities
+    await updateDirtyItems(items, initialQtyById, query, logContext);
 
     const nextItems = [...items];
 
-    // Handle adding new bin location
+    // 2. Handle adding stock to an existing bin location
     if (isAdding) {
-        const trimmedQuery = draftQuery.trim();
+        const { selectedBin: validatedBin, qty: qtyNum } = validateAddBinStockInput({
+            draftQuery,
+            draftQty,
+            selectedBin,
+        });
 
-        if (!selectedBin) {
-            if (!trimmedQuery) {
-                throw new Error("Please type and select a bin location.");
-            }
-            throw new Error(`"${trimmedQuery}" is not selected. Please choose a bin location from the suggestions.`);
-        }
-
-        const qtyNum = parseInt(draftQty, 10);
-        if (!Number.isFinite(qtyNum) || qtyNum < 0) {
-            throw new Error("Please enter a valid quantity.");
-        }
-
-        const existingStockIndex = nextItems.findIndex((i) => i.binLocationId === selectedBin.id);
+        const existingStockIndex = nextItems.findIndex((i) => i.binLocationId === validatedBin.id);
         if (existingStockIndex >= 0) {
-            await updateExistingBinQty(query, nextItems, existingStockIndex, qtyNum, {
-                variantTitle,
-                variantBarcode,
-                token,
-            });
+            await updateExistingBinQty(query, nextItems, existingStockIndex, qtyNum, logContext);
         } else {
-            throw new Error(`This bin location: "${trimmedQuery}" is not yet linked to this variant.`);
+            throw new Error(`This bin location: "${draftQuery.trim()}" is not yet linked to this variant.`);
         }
     }
 
-    // Sync inventory to Shopify
+    // 3. Sync total inventory to Shopify
     if (inventoryItemId && locationId) {
         await syncInventory(query, nextItems, inventoryItemId, locationId);
     }
@@ -155,7 +161,12 @@ async function updateExistingBinQty(
     items: StockItem[],
     existingStockIndex: number,
     qtyNum: number,
-    logContext?: { variantTitle?: string | null; variantBarcode?: string | null; token?: string | null; userFirstName?: string | null },
+    logContext?: {
+        variantTitle?: string | null;
+        variantBarcode?: string | null;
+        token?: string | null;
+        user?: string | null
+    },
 ): Promise<void> {
     const existing = items[existingStockIndex];
     const result = await query<UpdateStockResponse>(METAOBJECT_UPDATE_MUTATION, {
@@ -171,7 +182,7 @@ async function updateExistingBinQty(
         destinationLocation: existing.bin,
         destinationQty: qtyNum,
         token: logContext?.token,
-        user: logContext?.userFirstName
+        user: logContext?.user,
     });
     items[existingStockIndex] = { ...existing, qty: qtyNum };
 }

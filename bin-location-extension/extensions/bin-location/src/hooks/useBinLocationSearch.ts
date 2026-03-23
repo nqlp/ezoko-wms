@@ -3,6 +3,7 @@ import { SEARCH_BIN_LOCATIONS_QUERY } from '../graphql/queries';
 import { SearchBinLocationsResponse } from '../types/api';
 import { BinLocation } from '../types/warehouseStock';
 import { getFieldValue, ShopifyQueryFct } from '../utils/helpers';
+import { scoreMatch } from '../utils/search';
 
 export type { BinLocation } from '../types/warehouseStock';
 
@@ -66,15 +67,6 @@ export function useBinLocationSearch(
         setNoResultsFound(false);
     };
 
-    const fuzzyMatch = (query: string, target: string) => {
-        // "abc" => "a.*b.*c". "abc" match "Alpha Beta Charlie"
-        const pattern = query.split("").map(char => char.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join(".*");
-
-        // Create a regex from the generated pattern, with the "i" flag to ignore case
-        const regex = new RegExp(pattern, "i");
-        return regex.test(target);
-    };
-
     // Search effect
     useEffect(() => {
         if (!isAdding) return;
@@ -93,32 +85,13 @@ export function useBinLocationSearch(
                 });
 
                 const nodes = response?.data.metaobjects.nodes || [];
-                const queryLower = searchQuery.toLowerCase();
                 const mapped = nodes.map((node) => {
                     const title = (getFieldValue(node.fields, "bin_location") || "").trim();
-                    const titleLower = title.toLowerCase();
-
-                    /*
-                    * search algorithm:
-                    * 1. exact match in title
-                    * 2. partial match in title
-                    * 3. partial match in handle
-                    */
-
-                    let score = 0;
-                    if (titleLower == queryLower) {
-                        score = 10;
-                    } else if (titleLower.startsWith(queryLower)) {
-                        score = 8;
-                    } else if (titleLower.includes(queryLower)) {
-                        score = 5;
-                    } else if (fuzzyMatch(queryLower, titleLower)) {
-                        score = 2;
-                    }
+                    const score = scoreMatch(searchQuery, title);
                     return { id: node.id, title, score };
                 }).filter((node) => node.score > 0)
                     .sort((a, b) => b.score - a.score
-                        || a.title.localeCompare(b.title)); // sort by score, then title
+                        || a.title.localeCompare(b.title));
 
                 const finalResults = mapped.slice(0, 3).map(({ id, title }) => ({ id, title }));
                 setSearchResults(finalResults);
